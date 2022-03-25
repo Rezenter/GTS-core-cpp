@@ -1,4 +1,4 @@
-# caen743
+# GTS-core
 
 Globus-M2 Core Thomson Scattering diagnostics control.
 
