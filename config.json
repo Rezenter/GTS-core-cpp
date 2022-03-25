@@ -1,0 +1,64 @@
+{
+  "crate": {
+    "caens": [
+      {
+        "link": 0,
+        "node": 0
+      },
+      {
+        "link": 1,
+        "node": 0
+      },
+      {
+        "link": 2,
+        "node": 0
+      },
+      {
+        "link": 3,
+        "node": 0
+      },
+      {
+        "link": 0,
+        "node": 1
+      },
+      {
+        "link": 1,
+        "node": 1
+      },
+      {
+        "link": 2,
+        "node": 1
+      },
+      {
+        "link": 3,
+        "node": 1
+      }
+    ]
+  },
+  "experiment": {
+    "maxAcquisitionTime": 1,
+    "debugCounter": 0,
+    "plasmaCounter": 0,
+    "globusCounter": 0,
+    "isPlasma": false
+  },
+  "caen": {
+    "recordLength": 1024,
+    "triggerDelay": 18,
+    "frequency": "3.2",
+    "triggerThreshold": "6FFF",
+    "offset": "7FFF"
+  },
+  "connection": {
+    "connectionInterval": 1,
+    "commandTimeout": 100,
+    "connectionDeadTime": 10,
+    "messagePoolingInterval": 100
+  },
+  "storage": {
+    "plasmaPath": "d:/data/fastDump/plasma/",
+    "debugPath": "d:/data/fastDump/debug/",
+    "logPath": "d:/data/fastDump/logs/",
+    "verboseLevel": 0
+  }
+}
