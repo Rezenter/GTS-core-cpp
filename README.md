@@ -5,6 +5,8 @@ Globus-M2 Core Thomson Scattering diagnostics control.
 ## Сборка
 сейчас для сборки используется cygwin
 
+используется библиотека mingw64_86_boost из cygwin
+
 ## Запуск и использование
 Пока предлагается запускать исполняемый файл из папки со сборкой: D:\code\caen743\cmake-build-debug\fastAcquisition.exe.
 Также возможен запуск из среды разработки CLion.

@@ -27,7 +27,7 @@
 #include <stdint.h>
 
 #ifdef WIN32
-    #include <WinSock2.h>
+    #include <winsock2.h>
     #include <windows.h>
     #define CAENDGTZ_API __stdcall
 #else 

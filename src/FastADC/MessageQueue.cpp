@@ -2,7 +2,7 @@
 // Created by ts_group on 13.07.2020.
 //
 
-#include "MessageQueue.h"
+#include "include/FastADC/MessageQueue.h"
 
 //debug
 #include <iostream>

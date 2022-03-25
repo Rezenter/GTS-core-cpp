@@ -5,7 +5,7 @@
 #define CAEN743_CAEN743_H
 
 #include "CAENDigitizer.h"
-#include "common.h"
+#include "Config.h"
 #include "Stoppable.h"
 #include "json.hpp"
 #include <vector>

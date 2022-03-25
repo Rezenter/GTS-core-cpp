@@ -1,45 +1,120 @@
-//
-// Created by user on 6/18/2020.
-//
+/**
+ *  danilod100 at gmail.com
+ *  Compile with: g++ async_http_server.cpp -o async_http_server -lboost_system -lboost_thread -lpthread
+ *
+ * */
 
 #include <iostream>
-#include <iomanip>
-#include <sstream>
-#include "json.hpp"
+#include <ostream>
+#include <istream>
+#include <ctime>
+#include <string>
+#include <boost/asio.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/enable_shared_from_this.hpp>
+#include <boost/thread.hpp>
 
-using Json = nlohmann::json;
+using boost::asio::ip::tcp;
 
-void delay(){
-    for(int i  = 0; i < 100000000; i++){
-        double fuck = 1.0/i;
+class HttpServer; // forward declaration
+
+class Request : public boost::enable_shared_from_this<Request>
+{
+    static std::string make_daytime_string()
+    {
+        std::time_t now = std::time(0);
+        return std::ctime(&now);
     }
+
+    // member variables
+    HttpServer& server;
+    boost::asio::streambuf request;
+
+    void afterRead( const boost::system::error_code& ec, std::size_t bytes_transferred)
+    {
+        // done reading, writes answer (yes, we ignore the request);
+        boost::asio::streambuf response;
+        std::ostream res_stream(&response);
+
+        // gets daytime string
+        std::string time = make_daytime_string();
+
+        res_stream << "HTTP/1.0 200 OK\r\n"
+                   << "Content-Type: text/html; charset=UTF-8\r\n"
+                   << "Content-Length: " << time.length() + 2 << "\r\n\r\n"
+                   << time << "\r\n";
+        boost::asio::async_write(*socket, response, boost::bind(&Request::afterWrite, shared_from_this(), _1, _2));
+    }
+
+    void afterWrite( const boost::system::error_code& ec, std::size_t bytes_transferred)
+    {
+        // done writing, closing connection
+        socket->close();
+    }
+
+public:
+
+    boost::shared_ptr<tcp::socket> socket;
+    Request(HttpServer& server);
+    void answer()
+    {
+        if (!socket) return;
+
+        // reads request till the end
+        boost::asio::async_read_until(*socket, request, "\r\n\r\n",
+                                      boost::bind(&Request::afterRead, shared_from_this(), _1, _2));
+    }
+
+};
+
+
+class HttpServer
+{
+public:
+
+    HttpServer(unsigned int port) : acceptor(io_service, tcp::endpoint(tcp::v4(), port)) {}
+    ~HttpServer() { if (sThread) sThread->join(); }
+
+    void Run()
+    {
+        sThread.reset(new boost::thread(boost::bind(&HttpServer::thread_main, this)));
+    }
+
+    boost::asio::io_service io_service;
+
+private:
+    tcp::acceptor acceptor;
+    boost::shared_ptr<boost::thread> sThread;
+
+    void thread_main()
+    {
+        // adds some work to the io_service
+        start_accept();
+        io_service.run();
+    }
+
+    void start_accept()
+    {
+        boost::shared_ptr<Request> req (new Request(*this));
+        acceptor.async_accept(*req->socket,
+                              boost::bind(&HttpServer::handle_accept, this, req, _1));
+    }
+
+    void handle_accept(boost::shared_ptr<Request> req, const boost::system::error_code& error)
+    {
+        if (!error) { req->answer(); }
+        start_accept();
+    }
+};
+
+Request::Request(HttpServer& server): server(server)
+{
+    socket.reset(new tcp::socket(server.io_service));
 }
 
-int main(int argc, char* argv[]){
-    std::cout << "let the test begin\n" << std::endl << std::flush;
 
-    char text[] = R"(
-     {
-         "Image": {
-             "Width":  800,
-             "Height": 600,
-             "Title":  "View from 15th Floor",
-             "Thumbnail": {
-                 "Url":    "http://www.example.com/image/481989943",
-                 "Height": 125,
-                 "Width":  100
-             },
-             "Animated" : false,
-             "IDs": [116, 943, 234, 38793]
-         }
-     }
-     )";
-
-    // parse and serialize JSON
-    Json j_complete = Json::parse(text);
-    std::cout << std::setw(4) << j_complete << "\n\n";
-
-    std::cout << "\ntotally clean" << std::endl << std::flush;
-    delay();
-    return 0;
+int main (int argc, char *argv[])
+{
+    HttpServer server(8080);
+    server.Run();
 }

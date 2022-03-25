@@ -5,7 +5,7 @@
 #ifndef CAEN743_STORAGE_H
 #define CAEN743_STORAGE_H
 
-#include "common.h"
+#include "Config.h"
 #include "json.hpp"
 #include <io.h>
 #include <iomanip>

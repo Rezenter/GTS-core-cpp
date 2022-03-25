@@ -6,7 +6,7 @@
 #include <iostream>
 //debug
 
-#include "CAEN743.h"
+#include "include/FastADC/CAEN743.h"
 
 unsigned char CAEN743::caenCount = 0;
 

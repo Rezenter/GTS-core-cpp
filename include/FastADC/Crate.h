@@ -6,7 +6,7 @@
 #define CAEN743_CRATE_H
 
 #include "CAEN743.h"
-#include "common.h"
+#include "Config.h"
 
 
 class Crate{

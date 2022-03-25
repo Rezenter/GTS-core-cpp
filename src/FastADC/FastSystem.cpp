@@ -2,9 +2,12 @@
 // Created by ts_group on 6/28/2020.
 //
 
-#include "FastSystem.h"
+#include "include/FastADC/FastSystem.h"
 
-FastSystem::FastSystem(Config& config) : config(config), crate(Crate(config)), storage(config), armed(false){
+FastSystem::FastSystem(Config &config) : crate(Crate(config)), storage(config), armed(false), config(config) {
+    std::cout << "Voltage range: [" << config.offset - 1250 << ", " << config.offset + 1250 << "] mv." << std::endl;
+    //std::cout << "Trigger level = " << config.triggerThreshold << " mv." << std::endl; // ch0 trigger should not be used
+
     this->armed = false;
     if(init()){
         exit = false;

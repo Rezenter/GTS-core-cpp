@@ -2,7 +2,7 @@
 // Created by ts_group on 6/28/2020.
 //
 
-#include "Crate.h"
+#include "include/FastADC/Crate.h"
 
 //debug
 #include <iostream>

@@ -33,15 +33,7 @@ private:
             "exit",
             "close"
     };
-    /*
-    std::map<std::string, int> commands = {
-            {"alive", 0},
-            {"arm", 1 },
-            {"disarm", 2},
-            {"exit", 3},
-            {"close", 4},
-    };
-*/
+
     const char jsonStart = '{';
     const char jsonEnd = '}';
 

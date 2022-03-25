@@ -2,7 +2,7 @@
 // Created by ts_group on 10.07.2020.
 //
 
-#include "Chatter.h"
+#include "include/FastADC/Chatter.h"
 
 bool Chatter::init(Config &config) {
     //std::cout << "init chatter" << std::endl;

@@ -2,7 +2,7 @@
 // Created by ts_group on 09.07.2020.
 //
 
-#include "Storage.h"
+#include "include/FastADC/Storage.h"
 
 Storage::Storage(Config &config) : config(config){
 

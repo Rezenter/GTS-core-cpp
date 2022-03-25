@@ -22,7 +22,7 @@ private:
     bool armed;
 
 public:
-    explicit FastSystem(Config& config);
+    explicit FastSystem(Config &config);
     ~FastSystem();
 
     bool arm();
