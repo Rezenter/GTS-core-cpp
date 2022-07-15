@@ -3,7 +3,7 @@
 //
 
 #include "version.h"
-#include "include/FastADC/FastSystem.h"
+//#include "include/FastADC/FastSystem.h"
 
 #include <iostream>
 #include <string>
@@ -15,6 +15,7 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char* argv[]) {
     std::cout << "TS fast acquisition, revision:" << REVISION << std::endl << std::flush;
     std::cout << std::filesystem::current_path() << '\n' <<std::flush;
 
+    /*
     //FastADC legacy
     Config config;
     if(!config.load()){
@@ -24,11 +25,11 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char* argv[]) {
     while (!fs.exitRequested()){
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
-
+*/
 
     //Server
     try{
-        http::server::server s("192.168.10.41", "8080", "html/");
+        http::server::server s("172.16.12.130", "8080", "../html/");
         s.run();
     }
     catch (std::exception& e){
@@ -38,4 +39,5 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char* argv[]) {
 
 
     std::cout << "\nNormal exit." << std::endl << std::flush;
+    return 0;
 }
