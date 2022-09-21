@@ -12,10 +12,9 @@
 #define HTTP_REQUEST_HANDLER_HPP
 
 #include <string>
+#include "include/FastADC/FastSystem.h"
 
-namespace http {
-    namespace server {
-
+namespace http::server {
         struct reply;
         struct request;
 
@@ -33,6 +32,8 @@ namespace http {
             void handle_request(const request& req, reply& rep);
 
         private:
+            FastSystem fastSystem;
+
             /// The directory containing the files to be served.
             std::string doc_root_;
 
@@ -41,7 +42,6 @@ namespace http {
             static bool url_decode(const std::string& in, std::string& out);
         };
 
-    } // namespace server
-} // namespace http
+    } // namespace http
 
 #endif // HTTP_REQUEST_HANDLER_HPP

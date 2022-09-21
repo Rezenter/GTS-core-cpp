@@ -12,7 +12,7 @@
 #include <filesystem>
 
 int main([[maybe_unused]] int argc,[[maybe_unused]] char* argv[]) {
-    std::cout << "TS fast acquisition, revision:" << REVISION << std::endl << std::flush;
+    std::cout << "TS C++ server, revision:" << REVISION << std::endl << std::flush;
     std::cout << std::filesystem::current_path() << '\n' <<std::flush;
 
     /*

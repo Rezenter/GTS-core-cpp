@@ -56,6 +56,8 @@ namespace http {
 
             /// Get a stock reply.
             static reply stock_reply(status_type status);
+
+            static reply api_reply(std::string payload);
         };
 
     } // namespace server

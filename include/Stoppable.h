@@ -16,7 +16,7 @@ private:
     mutable std::mutex mutex;
 
 protected:
-    virtual bool payload() = 0; //this one is pure virtual
+    virtual bool payload() = 0; //this one is pure virtual. return isFinished
     virtual void beforePayload(){};
     virtual void afterPayload(){};
     bool stop = false;

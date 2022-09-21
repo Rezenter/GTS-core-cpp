@@ -4,6 +4,7 @@
 
 #include "include/FastADC/FastSystem.h"
 
+/*
 FastSystem::FastSystem(Config &config) : crate(Crate(config)), storage(config), armed(false), config(config) {
     std::cout << "Voltage range: [" << config.offset - 1250 << ", " << config.offset + 1250 << "] mv." << std::endl;
     //std::cout << "Trigger level = " << config.triggerThreshold << " mv." << std::endl; // ch0 trigger should not be used
@@ -24,10 +25,11 @@ FastSystem::FastSystem(Config &config) : crate(Crate(config)), storage(config), 
         std::cout << "Fast system init failed!" << std::endl;
     }
 }
+*/
 
 bool FastSystem::arm() {
     if(!this->armed){
-        this->armed = crate.arm();
+        this->armed = crate->arm();
         return this->armed;
     }
     return false;
@@ -36,34 +38,36 @@ bool FastSystem::arm() {
 bool FastSystem::disarm() {
     if(this->armed){
         this->armed = false;
-        return storage.saveDischarge(crate.disarm());
+        return storage->saveDischarge(crate->disarm());
     }
     return false;
 }
 
 bool FastSystem::isAlive() {
-    if(!crate.isAlive()){
+    if(!crate->isAlive()){
         return false;
     }
-    if(!storage.isAlive()){
+    if(!storage->isAlive()){
         return false;
     }
     return true;
 }
 
 bool FastSystem::init() {
-    if(!chatter.init(config)){
+    /*
+    if(!chatter->init(config)){
         return false;
     }
-    if(!crate.init()){
+    if(!crate->init()){
         return false;
     }
+     */
     this->armed = false;
     return true;
 }
 
 bool FastSystem::payload() {
-    Message fromChatter = chatter.messages.getMessage();
+    Message fromChatter = chatter->messages.getMessage();
     if(fromChatter.id != -1){
         messagePayload = {
             {"id", fromChatter.id}
@@ -79,16 +83,16 @@ bool FastSystem::payload() {
             case 1:
                 //arm
                 if(isAlive()){
-                    config.isPlasma = fromChatter.payload["isPlasma"];
-                    if(config.isPlasma){
-                        config.plasmaShot = fromChatter.payload["shotn"];
+                    config->isPlasma = fromChatter.payload["isPlasma"];
+                    if(config->isPlasma){
+                        config->plasmaShot = fromChatter.payload["shotn"];
                     }else{
-                        config.debugShot = fromChatter.payload["shotn"];
+                        config->debugShot = fromChatter.payload["shotn"];
                     }
                     if(fromChatter.payload.contains("header")){
-                        config.aux_args = fromChatter.payload["header"];
+                        config->aux_args = fromChatter.payload["header"];
                     }else{
-                        config.aux_args = {};
+                        config->aux_args = {};
                     }
                     messagePayload["status"] = arm();
                     if(!messagePayload["status"]){
@@ -121,9 +125,9 @@ bool FastSystem::payload() {
                 std::cout << "Unknown message from chatter: " << fromChatter.id << std::endl;
                 break;
         }
-        chatter.sendPacket(messagePayload);
+        chatter->sendPacket(messagePayload);
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(config.messagePoolingInterval));
+    std::this_thread::sleep_for(std::chrono::milliseconds(config->messagePoolingInterval));
     return false;
 }
 
@@ -134,4 +138,12 @@ FastSystem::~FastSystem() {
         associatedThread.join();
     }
     std::cout << "OK" << std::endl;
+}
+
+FastSystem::FastSystem() {
+
+}
+
+std::string FastSystem::requestHandler(Json payload){
+    return R"({"ok": "false", "description": "bad request"})";
 }

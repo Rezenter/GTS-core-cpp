@@ -10,6 +10,7 @@
 
 #include "Server/reply.hpp"
 #include <string>
+#include <utility>
 
 namespace http {
     namespace server {
@@ -248,6 +249,19 @@ namespace http {
             rep.headers[0].value = std::to_string(rep.content.size());
             rep.headers[1].name = "Content-Type";
             rep.headers[1].value = "text/html";
+            return rep;
+        }
+
+        reply reply::api_reply(std::string payload)
+        {
+            reply rep;
+            rep.status = reply::ok;
+            rep.content = std::move(payload);
+            rep.headers.resize(2);
+            rep.headers[0].name = "Content-Length";
+            rep.headers[0].value = std::to_string(rep.content.size());
+            rep.headers[1].name = "Content-Type";
+            rep.headers[1].value = "application/json";
             return rep;
         }
 

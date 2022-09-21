@@ -12,25 +12,26 @@
 
 class FastSystem : public Stoppable{
 private:
-    Crate crate;
-    Storage storage;
-    Chatter chatter;
-    Config& config;
+    Crate* crate;
+    Storage* storage;
+    Chatter* chatter;
+    Config* config;
     bool exit = true;
     bool payload() override;
     Json messagePayload;
-    bool armed;
-
-public:
-    explicit FastSystem(Config &config);
-    ~FastSystem();
+    bool armed = false;
 
     bool arm();
     bool disarm();
     bool isAlive();
 
     bool init();
-    bool exitRequested(){return exit;};
+
+public:
+    FastSystem();
+    ~FastSystem();
+
+    std::string requestHandler(Json payload);
 };
 
 

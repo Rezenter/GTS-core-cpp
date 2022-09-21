@@ -13,7 +13,6 @@
 #include <utility>
 
 namespace http::server {
-
         server::server(const std::string& address, const std::string& port,
                        const std::string& doc_root)
                 : io_context_(1),

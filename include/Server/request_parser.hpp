@@ -35,14 +35,12 @@ namespace http::server {
             /// required. The InputIterator return value indicates how much of the input
             /// has been consumed.
             template <typename InputIterator>
-            std::tuple<result_type, InputIterator> parse(request& req,
-                                                         InputIterator begin, InputIterator end)
-            {
-                while (begin != end)
-                {
+            std::tuple<result_type, InputIterator> parse(request& req, InputIterator begin, InputIterator end){
+                while (begin != end){
                     result_type result = consume(req, *begin++);
-                    if (result == good || result == bad)
+                    if (result == good || result == bad) {
                         return std::make_tuple(result, begin);
+                    }
                 }
                 return std::make_tuple(indeterminate, begin);
             }
@@ -85,8 +83,11 @@ namespace http::server {
                 space_before_header_value,
                 header_value,
                 expecting_newline_2,
-                expecting_newline_3
+                expecting_newline_3,
+                expecting_body
             } state_;
+
+            int layer = 0;
         };
 
     } // namespace http

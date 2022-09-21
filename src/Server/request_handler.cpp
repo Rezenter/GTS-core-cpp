@@ -15,20 +15,16 @@
 #include "Server/mime_types.hpp"
 #include "Server/reply.hpp"
 #include "Server/request.hpp"
+#include "json.hpp"
 
+using Json = nlohmann::json;
 namespace http::server {
+        request_handler::request_handler(const std::string& doc_root) : doc_root_(doc_root){}
 
-        request_handler::request_handler(const std::string& doc_root)
-                : doc_root_(doc_root)
-        {
-        }
-
-        void request_handler::handle_request(const request& req, reply& rep)
-        {
+        void request_handler::handle_request(const request& req, reply& rep){
             // Decode url to path.
             std::string request_path;
-            if (!url_decode(req.uri, request_path))
-            {
+            if (!url_decode(req.uri, request_path)){
                 rep = reply::stock_reply(reply::bad_request);
                 return;
             }
@@ -42,21 +38,35 @@ namespace http::server {
             }
 
             if(req.method == "POST"){
-                //not implemented
-                rep = reply::stock_reply(reply::not_implemented);
+                try{
+                    Json payload = Json::parse(req.payload);
+                    if(payload.contains("subsystem")){
+                        if(payload.at("subsystem") == "ADC"){
+                            rep = reply::api_reply(fastSystem.requestHandler(payload));
+                            return;
+                        }
+                    }
+                }catch(Json::parse_error& err){
+                    rep = reply::stock_reply(reply::bad_request);
+                    return;
+                }
+                rep = reply::stock_reply(reply::no_content);
                 return;
-            }else if(req.method == "GET") {
+            }else
+                if(req.method == "GET"){
+                std::string extension;
+
                 // If path ends in slash (i.e. is a directory) then add "index.html".
                 if (request_path[request_path.size() - 1] == '/') {
                     request_path += "index.html";
-                }
-
-                // Determine the file extension.
-                std::size_t last_slash_pos = request_path.find_last_of("/");
-                std::size_t last_dot_pos = request_path.find_last_of(".");
-                std::string extension;
-                if (last_dot_pos != std::string::npos && last_dot_pos > last_slash_pos) {
-                    extension = request_path.substr(last_dot_pos + 1);
+                    extension = "html";
+                }else {
+                    // Determine the file extension.
+                    std::size_t last_slash_pos = request_path.find_last_of("/");
+                    std::size_t last_dot_pos = request_path.find_last_of(".");
+                    if (last_dot_pos != std::string::npos && last_dot_pos > last_slash_pos) {
+                        extension = request_path.substr(last_dot_pos + 1);
+                    }
                 }
 
                 // Open the file to send back.

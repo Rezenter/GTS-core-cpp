@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Acquisition Section</title>
+</head>
+<body>
+    <div class="row">
+        <p>ADC control</p>
+        <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
+            <p id="ADC_state">No connection</p>
+            <button class="btn btn-info" id="ADC_refresh_button">Reconnect</button>
+        </div>
+        <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
+            <label for="next_shot_number">Next shot №:</label><output id="next_shot_number"></output>
+
+            <label for="is_plasma">Is plasma?</label><input type="checkbox" id="is_plasma" checked>
+        </div>
+        <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
+            <button class="btn btn-success" id="ADC_arm_button">Arm</button>
+            <button class="btn btn-danger" id="ADC_disarm_button">Disarm</button>
+        </div>
+    </div>
+</body>
+
+<script>
+    function Main () {
+        this.Request = function (req, callback) {
+            $.post('/api', JSON.stringify(req), callback, 'json');
+        };
+
+        //ADC
+        this.ADCArm = function(){
+            this.Request(
+                {
+                    subsystem: 'ADC',
+                    reqtype: 'ADC_arm',
+                    is_plasma: $('#is_plasma')[0].checked
+                }
+                , function (resp) {
+                    if(!resp.ok){
+                        console.log(resp);
+                        alert(resp);
+                    }
+                }
+            );
+        }.bind(this);
+
+        this.ADCDisarm = function(){
+            this.Request(
+                {
+                    subsystem: 'ADC',
+                    reqtype: 'ADC_disarm'
+                }
+                , function (resp) {
+                    if(!resp.ok){
+                        console.log(resp);
+                        alert(resp);
+                    }
+                }
+            );
+        }.bind(this);
+
+        this.ADCStatus = function(state){
+            if(state.conn){
+                if(state.state === 1){
+                    $('#ADC_state').css('background-color','white');
+                    $('#ADC_state').html('Ready ' + ((state.unix - Date.now())).toFixed(0) + ' (ms)');
+                    $('#ADC_arm_button').prop("disabled", false);
+                    $('#ADC_disarm_button').prop( "disabled", true);
+                }else if(state.state === 2){
+                    $('#ADC_state').css('background-color','green');
+                    $('#ADC_state').html('Armed ' + ((state.unix - Date.now())).toFixed(0) + ' (ms)');
+                    $('#ADC_arm_button').prop("disabled", true);
+                    $('#ADC_disarm_button').prop( "disabled", false);
+                }
+            }else{
+                $('#ADC_state').css('background-color','red');
+                $('#ADC_state').html('Disconnected');
+            }
+        };
+
+
+        this.ConnectControls = function () {
+            $('#ADC_arm_button').on('click', this, this.ADCArm);
+            $('#ADC_disarm_button').on('click', this, this.ADCDisarm);
+        };
+
+        this.ConnectControls();
+    }
+
+    $(document).ready(function () {
+            let viewer = new Main();
+        })
+</script>
+</html>
