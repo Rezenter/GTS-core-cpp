@@ -4,35 +4,12 @@
 
 #include "include/FastADC/FastSystem.h"
 
-/*
-FastSystem::FastSystem(Config &config) : crate(Crate(config)), storage(config), armed(false), config(config) {
-    std::cout << "Voltage range: [" << config.offset - 1250 << ", " << config.offset + 1250 << "] mv." << std::endl;
-    //std::cout << "Trigger level = " << config.triggerThreshold << " mv." << std::endl; // ch0 trigger should not be used
-
-    this->armed = false;
-    if(init()){
-        exit = false;
-        if(!isAlive()){
-            std::cout << "FastSystem init failed" << std::endl;
-            return;
-        }
-
-        associatedThread = std::thread([&](){
-            run();
-        });
-        std::cout << "System initialised" <<std::endl;
-    }else{
-        std::cout << "Fast system init failed!" << std::endl;
-    }
-}
-*/
-
 bool FastSystem::arm() {
     if(!this->armed){
         this->armed = crate->arm();
         return this->armed;
     }
-    return false;
+    return true;
 }
 
 bool FastSystem::disarm() {
@@ -40,10 +17,13 @@ bool FastSystem::disarm() {
         this->armed = false;
         return storage->saveDischarge(crate->disarm());
     }
-    return false;
+    return true;
 }
 
 bool FastSystem::isAlive() {
+    if(!ready){
+        return false;
+    }
     if(!crate->isAlive()){
         return false;
     }
@@ -54,96 +34,100 @@ bool FastSystem::isAlive() {
 }
 
 bool FastSystem::init() {
-    /*
-    if(!chatter->init(config)){
+    this->ready = false;
+    this->config = new Config();
+    if(!this->config->load()){
+        std::cout << "something went wrong during loading config." << std::endl;
+    }
+    std::cout << "Voltage range: [" << this->config->offset - 1250 << ", " << this->config->offset + 1250 << "] mv." << std::endl;
+    //std::cout << "Trigger level = " << config.triggerThreshold << " mv." << std::endl; // ch0 trigger should not be used
+
+    this->crate = new Crate(*this->config);
+    this->storage = new Storage(*this->config);
+    this->ready = true;
+    if(!isAlive()){
+        std::cout << "FastSystem init failed" << std::endl;
+        this->kill();
         return false;
     }
-    if(!crate->init()){
-        return false;
-    }
-     */
     this->armed = false;
+    std::cout << "System initialised" <<std::endl;
+
     return true;
 }
 
-bool FastSystem::payload() {
-    Message fromChatter = chatter->messages.getMessage();
-    if(fromChatter.id != -1){
-        messagePayload = {
-            {"id", fromChatter.id}
-        };
-        switch (fromChatter.id) {
-            case 0:
-                //isAlive
-                messagePayload["status"] = isAlive();
-                if(!messagePayload["status"]){
-                    messagePayload["error"] = "Fast system is dead.";
-                }
-                break;
-            case 1:
-                //arm
-                if(isAlive()){
-                    config->isPlasma = fromChatter.payload["isPlasma"];
-                    if(config->isPlasma){
-                        config->plasmaShot = fromChatter.payload["shotn"];
-                    }else{
-                        config->debugShot = fromChatter.payload["shotn"];
-                    }
-                    if(fromChatter.payload.contains("header")){
-                        config->aux_args = fromChatter.payload["header"];
-                    }else{
-                        config->aux_args = {};
-                    }
-                    messagePayload["status"] = arm();
-                    if(!messagePayload["status"]){
-                        messagePayload["error"] = "Failed to arm.";
-                    }
-                }else{
-                    messagePayload["error"] = "Fast system is dead.";
-                }
-                break;
-            case 2:
-                //disarm
-                if(isAlive()){
-                    messagePayload["status"] = disarm();
-                    if(!messagePayload["status"]){
-                        messagePayload["error"] = "Failed to disarm.";
-                    }
-                }else{
-                    messagePayload["error"] = "Fast system is dead.";
-                }
-                break;
-            case 3:
-                //exit
-                if(isAlive()){
-                    disarm();
-                }
-                exit = true;
-                requestStop();
-                break;
-            default:
-                std::cout << "Unknown message from chatter: " << fromChatter.id << std::endl;
-                break;
-        }
-        chatter->sendPacket(messagePayload);
+void FastSystem::kill() {
+    std::cout << "fastSystem destructor... ";
+    if(this->ready) {
+        delete this->crate;
+        delete this->storage;
+        delete this->config;
+        this->ready = false;
+        this->armed = false;
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(config->messagePoolingInterval));
-    return false;
+    std::cout << "OK" << std::endl;
 }
 
 FastSystem::~FastSystem() {
-    std::cout << "fastSystem destructor... ";
-    requestStop();
-    if(associatedThread.joinable()){
-        associatedThread.join();
-    }
-    std::cout << "OK" << std::endl;
+    this->kill();
 }
 
 FastSystem::FastSystem() {
 
 }
 
-std::string FastSystem::requestHandler(Json payload){
-    return R"({"ok": "false", "description": "bad request"})";
+Json FastSystem::requestHandler(Json req){
+    Json resp = {{"ok", true}};
+    if(req.contains("reqtype")){
+        if(req.at("reqtype") == "reboot"){
+            if(this->ready){
+                this->kill();
+            }
+            if(!this->init()){
+                resp["ok"] = false;
+                resp["err"] = "internal fail";
+            }
+        }else
+            if(req.at("reqtype") == "arm"){
+                if(!isAlive()){
+                    resp["ok"] = false;
+                    resp["err"] = "Fast system is dead.";
+                }else {
+                    if (req.contains("header")) {
+                        config->aux_args = req["header"];
+                    } else {
+                        config->aux_args = {};
+                    }
+                    if (!this->arm()) {
+                        resp["ok"] = false;
+                        resp["err"] = "internal fail";
+                    }
+                }
+        }else
+            if(req.at("reqtype") == "disarm"){
+                if(!this->ready){
+                    resp["ok"] = false;
+                    resp["err"] = "system is not initialised!";
+                }else
+                    if(!this->isAlive()){
+                        resp["ok"] = false;
+                        resp["err"] = "system is dead!";
+                    }else{
+                        if(!this->disarm()){
+                            resp["ok"] = false;
+                            resp["err"] = "internal fail";
+                        }
+                    }
+        }else
+            if(req.at("reqtype") == "state"){
+                resp["alive"] = this->isAlive();
+                resp["armed"] = this->armed;
+                resp["plasma_shotn"] = 99999;
+                resp["debug_shotn"] = 99999;
+        }
+    }else{
+        resp["ok"] = false;
+        resp["err"] = "reqtype is not listed";
+    }
+    return resp;
 }

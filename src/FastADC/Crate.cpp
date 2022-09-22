@@ -10,7 +10,7 @@
 
 
 Crate::Crate(Config &config) : config(config) {
-    //init();
+    init();
 }
 
 bool Crate::init() {

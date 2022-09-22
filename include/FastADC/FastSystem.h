@@ -7,18 +7,14 @@
 
 #include "Crate.h"
 #include "Storage.h"
-#include "Chatter.h"
 #include "Stoppable.h"
 
-class FastSystem : public Stoppable{
+class FastSystem{
 private:
     Crate* crate;
     Storage* storage;
-    Chatter* chatter;
     Config* config;
-    bool exit = true;
-    bool payload() override;
-    Json messagePayload;
+    bool ready = false;
     bool armed = false;
 
     bool arm();
@@ -26,12 +22,13 @@ private:
     bool isAlive();
 
     bool init();
+    void kill();
 
 public:
     FastSystem();
     ~FastSystem();
 
-    std::string requestHandler(Json payload);
+    Json requestHandler(Json req);
 };
 
 

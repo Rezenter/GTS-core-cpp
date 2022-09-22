@@ -16,6 +16,7 @@
 #include "Server/reply.hpp"
 #include "Server/request.hpp"
 #include "json.hpp"
+#include <chrono>
 
 using Json = nlohmann::json;
 namespace http::server {
@@ -42,7 +43,10 @@ namespace http::server {
                     Json payload = Json::parse(req.payload);
                     if(payload.contains("subsystem")){
                         if(payload.at("subsystem") == "ADC"){
-                            rep = reply::api_reply(fastSystem.requestHandler(payload));
+                            Json resp = fastSystem.requestHandler(payload);
+                            resp["unix"] = std::chrono::duration_cast<std::chrono::seconds>(
+                                    std::chrono::system_clock::now().time_since_epoch()).count();
+                            rep = reply::api_reply(to_string(resp));
                             return;
                         }
                     }

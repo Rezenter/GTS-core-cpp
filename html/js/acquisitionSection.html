@@ -9,7 +9,7 @@
         <p>ADC control</p>
         <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
             <p id="ADC_state">No connection</p>
-            <button class="btn btn-info" id="ADC_refresh_button">Reconnect</button>
+            <button class="btn btn-info" id="ADC_reboot_button">Reboot</button>
         </div>
         <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
             <label for="next_shot_number">Next shot №:</label><output id="next_shot_number"></output>
@@ -25,22 +25,51 @@
 
 <script>
     function Main () {
+        this.m_status_timer = null;
+        this.setTimer = function(){
+            let delay = 1000;
+            this.m_status_timer = setTimeout(function request() {
+                this.ADCStatus();
+                //if (ошибка запроса из-за перегрузки сервера) {
+                // увеличить интервал для следующего запроса
+                //  delay *= 2;
+                //}
+                this.m_status_timer = setTimeout(request.bind(this), delay);
+
+            }.bind(this), delay);
+        }
+
         this.Request = function (req, callback) {
             $.post('/api', JSON.stringify(req), callback, 'json');
         };
 
         //ADC
+        this.ADCReboot = function(){
+            this.Request(
+                {
+                    subsystem: 'ADC',
+                    reqtype: 'reboot'
+                }
+                , function (resp) {
+                    if(!resp.ok){
+                        console.log(resp);
+                        alert(resp.err);
+                    }
+                }
+            );
+        }.bind(this);
+
         this.ADCArm = function(){
             this.Request(
                 {
                     subsystem: 'ADC',
-                    reqtype: 'ADC_arm',
+                    reqtype: 'arm',
                     is_plasma: $('#is_plasma')[0].checked
                 }
                 , function (resp) {
                     if(!resp.ok){
                         console.log(resp);
-                        alert(resp);
+                        alert(resp.err);
                     }
                 }
             );
@@ -50,43 +79,60 @@
             this.Request(
                 {
                     subsystem: 'ADC',
-                    reqtype: 'ADC_disarm'
+                    reqtype: 'disarm'
                 }
                 , function (resp) {
                     if(!resp.ok){
                         console.log(resp);
-                        alert(resp);
+                        alert(resp.err);
                     }
                 }
             );
         }.bind(this);
 
-        this.ADCStatus = function(state){
-            if(state.conn){
-                if(state.state === 1){
-                    $('#ADC_state').css('background-color','white');
-                    $('#ADC_state').html('Ready ' + ((state.unix - Date.now())).toFixed(0) + ' (ms)');
-                    $('#ADC_arm_button').prop("disabled", false);
-                    $('#ADC_disarm_button').prop( "disabled", true);
-                }else if(state.state === 2){
-                    $('#ADC_state').css('background-color','green');
-                    $('#ADC_state').html('Armed ' + ((state.unix - Date.now())).toFixed(0) + ' (ms)');
-                    $('#ADC_arm_button').prop("disabled", true);
-                    $('#ADC_disarm_button').prop( "disabled", false);
+        this.ADCStatus = function(){
+            this.Request(
+                {
+                    subsystem: 'ADC',
+                    reqtype: 'reboot'
                 }
-            }else{
-                $('#ADC_state').css('background-color','red');
-                $('#ADC_state').html('Disconnected');
-            }
+                , function (resp) {
+                    if(!resp.ok){
+                        console.log(resp);
+                        alert(resp.err);
+                    }else{
+                        if(resp.alive){
+                            if(resp.armed){
+                                $('#ADC_state').css('background-color','green');
+                                $('#ADC_state').html('Armed ' + ((resp.unix - Date.now())).toFixed(0) + ' (ms)');
+                                $('#ADC_arm_button').prop("disabled", true);
+                                $('#ADC_disarm_button').prop( "disabled", false);
+                            }else {
+                                $('#ADC_state').css('background-color', 'white');
+                                $('#ADC_state').html('Ready ' + ((resp.unix - Date.now())).toFixed(0) + ' (ms)');
+                                $('#ADC_arm_button').prop("disabled", false);
+                                $('#ADC_disarm_button').prop("disabled", true);
+                            }
+                        }else{
+                            $('#ADC_state').css('background-color','red');
+                            $('#ADC_state').html('Not connected');
+
+                            //disable buttons!
+                        }
+                    }
+                }
+            );
         };
 
 
         this.ConnectControls = function () {
+            $('#ADC_reboot_button').on('click', this, this.ADCReboot);
             $('#ADC_arm_button').on('click', this, this.ADCArm);
             $('#ADC_disarm_button').on('click', this, this.ADCDisarm);
         };
 
         this.ConnectControls();
+        //this.setTimer();
     }
 
     $(document).ready(function () {
