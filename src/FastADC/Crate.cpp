@@ -37,13 +37,16 @@ bool Crate::arm() {
     associatedThread = std::thread([&](){
         run();
     });
+    std::cout << "armed" << std::endl;
     return true;
 }
 
 Json Crate::disarm() {
+    std::cout << "disarming..." << std::endl;
     for(int count = 0; count < config.caenCount; count++){
         caens[count]->disarm();
     }
+    this->requestStop();
     Json result = {
         {"header", {
                 {"version", 2},
@@ -66,7 +69,6 @@ Json Crate::disarm() {
     }
     std::cout << "all joined" << std::endl;
     result["header"]["error"] = false;
-    std::cout << "waiting thread" << std::endl;
     associatedThread.join();
     return result;
 }
@@ -83,12 +85,20 @@ bool Crate::isAlive() {
 
 bool Crate::payload() {
     //check, if all caens are ready and send data
-    buffer.val = 315;
-
+    for(int index = 0; index < config.caenCount; index++){
+        if(!caens[index]->eventReady){
+            return false;
+        }
+    }
+    for(int index = 0; index < config.caenCount; index++){
+        caens[index]->eventReady = false;
+    }
+    buffer.val = eventCount * 4096 * 10 / 100;
+    eventCount++;
     sendto(sockfd, buffer.chars, 2,
            0, (const struct sockaddr *) &servaddr,
            sizeof(servaddr));
-    return true;
+    return false;
 }
 
 void Crate::beforePayload() {
@@ -102,9 +112,11 @@ void Crate::beforePayload() {
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(8080);
     servaddr.sin_addr.s_addr = inet_addr("192.168.10.49");
+    eventCount = 0;
 }
 
 void Crate::afterPayload() {
     //close socket
     closesocket(sockfd);
+    eventCount = 0;
 }

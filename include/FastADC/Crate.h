@@ -25,6 +25,7 @@ private:
 
     SOCKET sockfd;
     struct sockaddr_in servaddr;
+    unsigned int eventCount = 0;
 
 public:
     explicit Crate(Config& config);

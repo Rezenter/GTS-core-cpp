@@ -66,6 +66,8 @@ public:
     Json waitTillProcessed();
     bool releaseMemory();
     [[nodiscard]] const int getSerial() const{return boardInfo.SerialNumber;};
+
+    bool eventReady = false;
 };
 
 #endif //CAEN743_CAEN743_H
