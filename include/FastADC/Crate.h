@@ -18,7 +18,13 @@ private:
     Buffer buffer;
     Config& config;
     CAEN743* caens[MAX_CAENS];
-    bool online = false;
+
+    bool payload() override;
+    void beforePayload() override;
+    void afterPayload() override;
+
+    SOCKET sockfd;
+    struct sockaddr_in servaddr;
 
 public:
     explicit Crate(Config& config);

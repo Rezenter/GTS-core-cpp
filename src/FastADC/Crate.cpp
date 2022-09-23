@@ -80,3 +80,31 @@ bool Crate::isAlive() {
     }
     return true;
 }
+
+bool Crate::payload() {
+    //check, if all caens are ready and send data
+    buffer.val = 315;
+
+    sendto(sockfd, buffer.chars, 2,
+           0, (const struct sockaddr *) &servaddr,
+           sizeof(servaddr));
+    return true;
+}
+
+void Crate::beforePayload() {
+    //open socket
+    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ){
+        perror("socket creation failed");
+    }
+
+    memset(&servaddr, 0, sizeof(servaddr));
+    // Filling server information
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_port = htons(8080);
+    servaddr.sin_addr.s_addr = inet_addr("192.168.10.49");
+}
+
+void Crate::afterPayload() {
+    //close socket
+    closesocket(sockfd);
+}
