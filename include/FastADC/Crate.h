@@ -8,9 +8,14 @@
 #include "CAEN743.h"
 #include "Config.h"
 
+union Buffer{
+    unsigned short int val;
+    char chars[2];
+};
 
-class Crate{
+class Crate : public Stoppable{
 private:
+    Buffer buffer;
     Config& config;
     CAEN743* caens[MAX_CAENS];
     bool online = false;

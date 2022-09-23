@@ -26,10 +26,8 @@ public:
     unsigned int nodes[MAX_CAENS];
 
     //experiment
-    int acquisitionTime = 1; //seconds
     unsigned int debugShot = 0;
     unsigned int plasmaShot = 0;
-    unsigned int globusShot = 0;
     bool isPlasma = false;
     Json aux_args = {};
 
@@ -42,20 +40,13 @@ public:
     uint16_t offsetADC = 0x7FFF;
     uint16_t triggerThresholdADC = 0x7FFF;
 
-    //connection
-    unsigned int connectionTimeout = 1; // seconds between connections
-    unsigned int commandTimeout = 100; // milliseconds between command readout attempts
-    unsigned int connectionDeadTime = 120; // seconds before connection close
-    unsigned int messagePoolingInterval = 100; // milliseconds between message reading
-
     //storage
     std::string plasmaPath = "d:/data/fastDump/plasma/";
     std::string debugPath = "d:/data/fastDump/debug/";
-    std::string logPath = "d:/data/fastDump/logs/";
-    unsigned int verboseLevel = 0;
+    std::string plasmaShotnPath = "z:/SHOTN.txt";
+    std::string debugShotnPath = "d:/data/db/debug/SHOTN.txt";
 
-    //bool load(std::string path = "d:/data/db/config.json");
-    bool load(std::string path = "d:/data/db/config_debug.json");
+    bool load(std::string path = "d:/data/db/config.json");
 };
 
 

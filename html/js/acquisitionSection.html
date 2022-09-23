@@ -26,10 +26,11 @@
 <script>
     function Main () {
         this.m_status_timer = null;
+        this.last_update = 0;
         this.setTimer = function(){
             let delay = 1000;
             this.m_status_timer = setTimeout(function request() {
-                this.ADCStatus();
+                this.ADCState();
                 //if (ошибка запроса из-за перегрузки сервера) {
                 // увеличить интервал для следующего запроса
                 //  delay *= 2;
@@ -90,40 +91,45 @@
             );
         }.bind(this);
 
-        this.ADCStatus = function(){
+        this.ADCState = function(){
             this.Request(
                 {
                     subsystem: 'ADC',
-                    reqtype: 'reboot'
+                    reqtype: 'state'
                 }
                 , function (resp) {
                     if(!resp.ok){
                         console.log(resp);
                         alert(resp.err);
                     }else{
+                        this.last_update = resp.unix;
                         if(resp.alive){
                             if(resp.armed){
                                 $('#ADC_state').css('background-color','green');
-                                $('#ADC_state').html('Armed ' + ((resp.unix - Date.now())).toFixed(0) + ' (ms)');
+                                $('#ADC_state').html('Armed ' + ((this.last_update - 1e-3 * Date.now())).toFixed(0) + ' (s)');
                                 $('#ADC_arm_button').prop("disabled", true);
                                 $('#ADC_disarm_button').prop( "disabled", false);
                             }else {
                                 $('#ADC_state').css('background-color', 'white');
-                                $('#ADC_state').html('Ready ' + ((resp.unix - Date.now())).toFixed(0) + ' (ms)');
+                                $('#ADC_state').html('Ready ' + ((this.last_update - 1e-3 * Date.now())).toFixed(0) + ' (s)');
                                 $('#ADC_arm_button').prop("disabled", false);
                                 $('#ADC_disarm_button').prop("disabled", true);
                             }
                         }else{
                             $('#ADC_state').css('background-color','red');
-                            $('#ADC_state').html('Not connected');
+                            $('#ADC_state').html('Not connected ' + ((this.last_update - 1e-3 * Date.now())).toFixed(0) + ' (s)');
 
                             //disable buttons!
+                        }
+                        if($('#is_plasma')[0].checked){
+                            $('#next_shot_number').val(resp.plasma_shotn);
+                        }else{
+                            $('#next_shot_number').val(resp.debug_shotn);
                         }
                     }
                 }
             );
         };
-
 
         this.ConnectControls = function () {
             $('#ADC_reboot_button').on('click', this, this.ADCReboot);
@@ -132,7 +138,7 @@
         };
 
         this.ConnectControls();
-        //this.setTimer();
+        this.setTimer();
     }
 
     $(document).ready(function () {

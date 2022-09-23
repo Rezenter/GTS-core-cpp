@@ -61,20 +61,6 @@ bool Config::load(std::string path) {
     if(config.contains(key)){
         section = config[key];
 
-        key = "maxAcquisitionTime";
-        if(section.contains(key)){
-            unsigned int candidate = section[key];
-            if(candidate != 0 && candidate <= MAX_CAENS){
-                acquisitionTime = candidate;
-            }else{
-                flag = false;
-                std::cout << "Wrong value for '" << key << "' = " << candidate << '.' << std::endl;
-            }
-        }else{
-            flag = false;
-            std::cout << "Config file missing '" << key << "', using default." << std::endl;
-        }
-
         key = "debugCounter";
         if(section.contains(key)){
             unsigned int candidate = section[key];
@@ -94,20 +80,6 @@ bool Config::load(std::string path) {
             unsigned int candidate = section[key];
             if(candidate >= 0){
                 plasmaShot = candidate;
-            }else{
-                flag = false;
-                std::cout << "Wrong value for '" << key << "' = " << candidate << '.' << std::endl;
-            }
-        }else{
-            flag = false;
-            std::cout << "Config file missing '" << key << "', using default." << std::endl;
-        }
-
-        key = "globusCounter";
-        if(section.contains(key)){
-            unsigned int candidate = section[key];
-            if(candidate >= 0){
-                globusShot = candidate;
             }else{
                 flag = false;
                 std::cout << "Wrong value for '" << key << "' = " << candidate << '.' << std::endl;
@@ -215,69 +187,6 @@ bool Config::load(std::string path) {
         std::cout << "Config file missing '" << key << "' section, using defaults." << std::endl;
     }
 
-    key = "connection";
-    if(config.contains(key)){
-        section = config[key];
-        key = "connectionInterval";
-        if(section.contains(key)){
-            unsigned int candidate = section[key];
-            if(candidate != 0){
-                connectionTimeout = candidate;
-            }else{
-                flag = false;
-                std::cout << "Wrong value for '" << key << "' = " << candidate << '.' << std::endl;
-            }
-        }else{
-            flag = false;
-            std::cout << "Config file missing '" << key << "', using default." << std::endl;
-        }
-
-        key = "commandTimeout";
-        if(section.contains(key)){
-            unsigned int candidate = section[key];
-            if(candidate != 0){
-                commandTimeout = candidate;
-            }else{
-                flag = false;
-                std::cout << "Wrong value for '" << key << "' = " << candidate << '.' << std::endl;
-            }
-        }else{
-            flag = false;
-            std::cout << "Config file missing '" << key << "', using default." << std::endl;
-        }
-
-        key = "connectionDeadTime";
-        if(section.contains(key)){
-            unsigned int candidate = section[key];
-            if(candidate != 0){
-                connectionDeadTime = candidate;
-            }else{
-                flag = false;
-                std::cout << "Wrong value for '" << key << "' = " << candidate << '.' << std::endl;
-            }
-        }else{
-            flag = false;
-            std::cout << "Config file missing '" << key << "', using default." << std::endl;
-        }
-
-        key = "messagePoolingInterval";
-        if(section.contains(key)){
-            unsigned int candidate = section[key];
-            if(candidate != 0){
-                messagePoolingInterval = candidate;
-            }else{
-                flag = false;
-                std::cout << "Wrong value for '" << key << "' = " << candidate << '.' << std::endl;
-            }
-        }else{
-            flag = false;
-            std::cout << "Config file missing '" << key << "', using default." << std::endl;
-        }
-    }else{
-        flag = false;
-        std::cout << "Config file missing '" << key << "' section, using defaults." << std::endl;
-    }
-
     key = "storage";
     if(config.contains(key)){
         section = config[key];
@@ -309,11 +218,11 @@ bool Config::load(std::string path) {
             std::cout << "Config file missing '" << key << "', using default." << std::endl;
         }
 
-        key = "logPath";
+        key = "plasmaShotnPath";
         if(section.contains(key)){
             std::string candidate = section[key];
             if(std::filesystem::exists(candidate)){
-                logPath = candidate;
+                plasmaShotnPath = candidate;
             }else{
                 flag = false;
                 std::cout << "Wrong value for '" << key << "' = " << candidate << '.' << std::endl;
@@ -323,10 +232,15 @@ bool Config::load(std::string path) {
             std::cout << "Config file missing '" << key << "', using default." << std::endl;
         }
 
-        key = "verboseLevel";
+        key = "debugShotnPath";
         if(section.contains(key)){
-            unsigned int candidate = section[key];
-            verboseLevel = candidate;
+            std::string candidate = section[key];
+            if(std::filesystem::exists(candidate)){
+                debugShotnPath = candidate;
+            }else{
+                flag = false;
+                std::cout << "Wrong value for '" << key << "' = " << candidate << '.' << std::endl;
+            }
         }else{
             flag = false;
             std::cout << "Config file missing '" << key << "', using default." << std::endl;

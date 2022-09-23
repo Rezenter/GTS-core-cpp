@@ -19,11 +19,9 @@ bool Crate::init() {
         caens[count]->init(config);
         if(!caens[count]->isAlive()){
             std::cout << "board " << count << " not initialised!" << std::endl;
-            online = false;
             return false;
         }
     }
-    online = true;
     return true;
 }
 
@@ -36,6 +34,9 @@ bool Crate::arm() {
     for(int count = 0; count < config.caenCount; count++){
         caens[count]->cyclicReadout();
     }
+    associatedThread = std::thread([&](){
+        run();
+    });
     return true;
 }
 
@@ -65,6 +66,8 @@ Json Crate::disarm() {
     }
     std::cout << "all joined" << std::endl;
     result["header"]["error"] = false;
+    std::cout << "waiting thread" << std::endl;
+    associatedThread.join();
     return result;
 }
 
@@ -72,10 +75,8 @@ bool Crate::isAlive() {
     for(int count = 0; count < config.caenCount; count++){
         if(!caens[count]->isAlive()){
             std::cout << "board " << count << " dead!" << std::endl;
-            online = false;
             return false;
         }
     }
-    online = true;
     return true;
 }

@@ -59,6 +59,8 @@
     "plasmaPath": "d:/data/fastDump/plasma/",
     "debugPath": "d:/data/fastDump/debug/",
     "logPath": "d:/data/fastDump/logs/",
-    "verboseLevel": 0
+    "verboseLevel": 0,
+    "plasmaShotnPath": "z:/SHOTN.txt",
+    "debugShotnPath": "d:/data/db/debud/SHOTN.txt"
   }
 }

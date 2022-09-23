@@ -14,6 +14,9 @@ bool Storage::saveDischarge(const Json& data) const {
         path << config.plasmaPath << std::setw(5) << std::setfill('0') << config.plasmaShot << '/';
     }else{
         path << config.debugPath << std::setw(5) << std::setfill('0') << config.debugShot << '/';
+        std::ofstream debugShotnFile(config.debugShotnPath);
+        debugShotnFile << (config.debugShot + 1);
+        debugShotnFile.close();
     }
     std::string pathStr = path.str();
     std::filesystem::create_directory(pathStr);
@@ -53,5 +56,20 @@ bool Storage::isAlive() const {
         std::cout << "Directory" << config.debugPath << "for debug shots not found." << std::endl;
         return false;
     }
+    if(!std::filesystem::is_regular_file(config.plasmaShotnPath)){
+        std::cout << "File" << config.plasmaShotnPath << "for plasma shotn not found." << std::endl;
+        return false;
+    }
+    if(!std::filesystem::is_regular_file(config.debugShotnPath)){
+        std::cout << "File" << config.debugShotnPath << "for debug shotn not found." << std::endl;
+        return false;
+    }
+    std::ifstream plasmaShotnFile(config.plasmaShotnPath);
+    plasmaShotnFile >> config.plasmaShot;
+    plasmaShotnFile.close();
+
+    std::ifstream debugShotnFile(config.debugShotnPath);
+    debugShotnFile >> config.debugShot;
+    debugShotnFile.close();
     return true;
 }

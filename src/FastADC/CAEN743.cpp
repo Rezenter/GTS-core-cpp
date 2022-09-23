@@ -172,7 +172,6 @@ void CAEN743::beforePayload() {
     //ret = CAEN_DGTZ_ClearData(handle);
 }
 
-
 Json CAEN743::waitTillProcessed() {
     associatedThread.join();
     //std::cout << "thread " << (int)address << " joined" << std::endl;

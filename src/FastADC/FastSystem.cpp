@@ -52,7 +52,6 @@ bool FastSystem::init() {
     }
     this->armed = false;
     std::cout << "System initialised" <<std::endl;
-
     return true;
 }
 
@@ -122,8 +121,8 @@ Json FastSystem::requestHandler(Json req){
             if(req.at("reqtype") == "state"){
                 resp["alive"] = this->isAlive();
                 resp["armed"] = this->armed;
-                resp["plasma_shotn"] = 99999;
-                resp["debug_shotn"] = 99999;
+                resp["plasma_shotn"] = this->config->plasmaShot;
+                resp["debug_shotn"] = this->config->debugShot;
         }
     }else{
         resp["ok"] = false;
