@@ -23,6 +23,10 @@ protected:
 
 public:
     std::thread associatedThread;
+    virtual ~Stoppable(){
+        requestStop();
+        associatedThread.join();
+    };
 
     void requestStop(){
         mutex.lock();

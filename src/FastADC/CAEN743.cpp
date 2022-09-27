@@ -13,6 +13,7 @@ unsigned char CAEN743::caenCount = 0;
 int CAEN743::init(Config& config){
     this->config = &config;
     ret = CAEN_DGTZ_OpenDigitizer(CAEN_DGTZ_OpticalLink, address, chain_node, 0, &handle);
+    processor->handles[chain_node] = handle;
     if(ret != CAEN_DGTZ_Success) {
         printf("Can't open digitizer (%d, %d)\n", address, chain_node);
         return CAEN_Error_Connection;
@@ -75,6 +76,7 @@ bool CAEN743::isAlive(){
 }
 
 CAEN743::~CAEN743() {
+    disarm();
     if(associatedThread.joinable()){
         associatedThread.join();
     }
@@ -89,57 +91,20 @@ CAEN743::~CAEN743() {
     //std::cout << "OK" << std::endl;
 }
 
-void CAEN743::process() {
-    results.clear();
-    CAEN_DGTZ_X743_EVENT_t* eventDecoded = nullptr;
-    ret = CAEN_DGTZ_AllocateEvent(handle, (void**)(&eventDecoded));
-
-    std::array<std::array<double, 1024>, 16> channels{};
-
-    CAEN_DGTZ_X743_GROUP_t* group;
-    for(char* event : events){
-        Json entry = {};
-        CAEN_DGTZ_DecodeEvent(handle, event, (void **) &eventDecoded);
-
-
-        for(int groupIdx = 0; groupIdx < MAX_V1743_GROUP_SIZE; groupIdx++){
-            if(eventDecoded->GrPresent[groupIdx]){
-                group = &eventDecoded->DataGroup[groupIdx];
-                if(!entry.contains("t")){
-                    entry["t"] = 1000.0 * group->TDC / CLOCK_FREQ;
-                }
-
-                for(int ch = 0; ch < 2; ch ++){
-                    for(int cell = 0; cell < config->recordLength; cell++){
-                        channels[ch + 2 * groupIdx][cell] = config->offset + group->DataChannel[ch][cell] * 2500 / 4096;
-                    }
-                }
-            }else{
-                for(int ch = 0; ch < 2; ch ++){
-                    for(int cell = 0; cell < config->recordLength; cell++){
-                        channels[ch + 2 * groupIdx][cell] = -12.34;
-                    }
-                }
-            }
-
-        }
-        entry["ch"] = channels;
-        results.push_back(entry);
-        delete[] event;
-    }
-    events.clear();
-    ret = CAEN_DGTZ_FreeEvent(handle, (void**)&eventDecoded);
-}
-
 bool CAEN743::arm() {
+    processor[chain_node].arm();
     ret = CAEN_DGTZ_ClearData(handle);
     ret = CAEN_DGTZ_SWStartAcquisition(handle);
-    return true;
 
+    associatedThread = std::thread([&](){
+        run();
+    });
+    return true;
 }
 
 bool CAEN743::disarm() {
     requestStop();
+    processor[chain_node].disarm();
     return true;
 }
 
@@ -152,43 +117,15 @@ bool CAEN743::payload() {
 
         for(counter = 0; counter < numEvents; counter++){
             CAEN_DGTZ_GetEventInfo(handle, buffer, bufferSize, counter, &eventInfo, &eventEncoded);
-            char* singleEvent = new char[EVT_SIZE];
-            memcpy(singleEvent, eventEncoded, EVT_SIZE);
-            events.push_back(singleEvent);
-
-            //attempt to decode
-            CAEN_DGTZ_X743_EVENT_t* eventDecoded = nullptr;
-            ret = CAEN_DGTZ_AllocateEvent(handle, (void**)(&eventDecoded));
-            std::array<std::array<double, 1024>, 16> channels{};
-            CAEN_DGTZ_X743_GROUP_t* group;
-
-
-            Json entry = {};
-            CAEN_DGTZ_DecodeEvent(handle, singleEvent, (void **) &eventDecoded);
-
-            for(int groupIdx = 0; groupIdx < MAX_V1743_GROUP_SIZE; groupIdx++){
-                if(eventDecoded->GrPresent[groupIdx]){
-                    group = &eventDecoded->DataGroup[groupIdx];
-                    if(!entry.contains("t")){
-                        entry["t"] = 1000.0 * group->TDC / CLOCK_FREQ;
-                    }
-                    for(int ch = 0; ch < 2; ch ++){
-                        for(int cell = 0; cell < config->recordLength; cell++){
-                            channels[ch + 2 * groupIdx][cell] = config->offset + group->DataChannel[ch][cell] * 2500 / 4096;
-                        }
-                    }
-                }else{
-                    for(int ch = 0; ch < 2; ch ++){
-                        for(int cell = 0; cell < config->recordLength; cell++){
-                            channels[ch + 2 * groupIdx][cell] = -12.34;
-                        }
-                    }
-                }
-
+            memcpy(&processor->encodedEvents[chain_node][currentEvent], eventEncoded, EVT_SIZE);
+            processor->mutex.lock();
+            processor->eventFlags[chain_node][currentEvent] = true;
+            processor->mutex.unlock();
+            currentEvent++;
+            if(currentEvent == SHOT_COUNT){
+                std::cout << "Warning! more than expected event count." << std::endl;
+                return true;
             }
-            entry["ch"] = channels;
-            //results.push_back(entry);
-            this->eventReady = true;
         }
     }
     return false;
@@ -202,26 +139,22 @@ void CAEN743::afterPayload() {
     }
     ret = CAEN_DGTZ_ClearData(handle);
     //std::cout << "stopped adc " << (int)address << std::endl << std::flush;
-    process();
+    //process();
     //std::cout << "after payload finished" << std::endl;
 }
 
 void CAEN743::beforePayload() {
+    currentEvent = 0;
     //ret = CAEN_DGTZ_ClearData(handle);
 }
 
 Json CAEN743::waitTillProcessed() {
     associatedThread.join();
+    std::cout << "redirect to processor" << std::endl;
     //std::cout << "thread " << (int)address << " joined" << std::endl;
     return results;
 }
 
-bool CAEN743::cyclicReadout() {
-    associatedThread = std::thread([&](){
-        run();
-    });
-    return false;
-}
 
 bool CAEN743::releaseMemory() {
     results.clear();

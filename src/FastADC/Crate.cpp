@@ -13,9 +13,23 @@ Crate::Crate(Config &config) : config(config) {
     init();
 }
 
+Crate::~Crate(){
+    disarm();
+    for(unsigned int count = 0; count < config.processCount; count++){
+        delete processors[count];
+    }
+    for(unsigned int count = 0; count < config.caenCount; count++){
+        delete caens[count];
+    }
+}
+
 bool Crate::init() {
-    for(int count = 0; count < config.caenCount; count++){
-        caens[count] = new CAEN743(config.links[count], config.nodes[count]);
+    armed = false;
+    for(unsigned int count = 0; count < config.processCount; count++){
+        processors[count] = new Processor(this->config);
+    }
+    for(unsigned int count = 0; count < config.caenCount; count++){
+        caens[count] = new CAEN743(config.links[count], config.nodes[count], processors[config.links[count]]);
         caens[count]->init(config);
         if(!caens[count]->isAlive()){
             std::cout << "board " << count << " not initialised!" << std::endl;
@@ -26,13 +40,14 @@ bool Crate::init() {
 }
 
 bool Crate::arm() {
-    for(int count = 0; count < config.caenCount; count++){
+    if(armed){
+        return false;
+    }
+    armed = true;
+    for(unsigned int count = 0; count < config.caenCount; count++){
         if(!caens[count]->arm()) {
             return false;
         }
-    }
-    for(int count = 0; count < config.caenCount; count++){
-        caens[count]->cyclicReadout();
     }
     associatedThread = std::thread([&](){
         run();
@@ -42,8 +57,15 @@ bool Crate::arm() {
 }
 
 Json Crate::disarm() {
+    if(!armed){
+        Json result = {
+                {"err", "Crate is not armed!"}
+        };
+        return result;
+    }
+    armed = false;
     std::cout << "disarming..." << std::endl;
-    for(int count = 0; count < config.caenCount; count++){
+    for(unsigned int count = 0; count < config.caenCount; count++){
         caens[count]->disarm();
     }
     this->requestStop();
@@ -62,7 +84,7 @@ Json Crate::disarm() {
         {"boards", Json::array()}
     };
 
-    for(int count = 0; count < config.caenCount; count++) {
+    for(unsigned int count = 0; count < config.caenCount; count++) {
         result["boards"].push_back(caens[count]->waitTillProcessed());
         result["header"]["boards"].push_back(caens[count]->getSerial());
         caens[count]->releaseMemory();
@@ -74,7 +96,7 @@ Json Crate::disarm() {
 }
 
 bool Crate::isAlive() {
-    for(int count = 0; count < config.caenCount; count++){
+    for(unsigned int count = 0; count < config.caenCount; count++){
         if(!caens[count]->isAlive()){
             std::cout << "board " << count << " dead!" << std::endl;
             return false;
@@ -85,12 +107,13 @@ bool Crate::isAlive() {
 
 bool Crate::payload() {
     //check, if all caens are ready and send data
-    for(int index = 0; index < config.caenCount; index++){
+    std::cout << "WRONG!!!" << std::endl;
+    for(unsigned int index = 0; index < config.caenCount; index++){
         if(!caens[index]->eventReady){
             return false;
         }
     }
-    for(int index = 0; index < config.caenCount; index++){
+    for(unsigned int index = 0; index < config.caenCount; index++){
         caens[index]->eventReady = false;
     }
     buffer.val = eventCount * 4096 * 10 / 100;
@@ -103,9 +126,7 @@ bool Crate::payload() {
 
 void Crate::beforePayload() {
     //open socket
-    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ){
-        perror("socket creation failed");
-    }
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
 
     memset(&servaddr, 0, sizeof(servaddr));
     // Filling server information

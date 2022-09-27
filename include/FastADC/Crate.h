@@ -6,7 +6,10 @@
 #define CAEN743_CRATE_H
 
 #include "CAEN743.h"
+#include "Processor.h"
 #include "Config.h"
+
+#define EVT_SIZE 34832
 
 union Buffer{
     unsigned short int val;
@@ -18,6 +21,7 @@ private:
     Buffer buffer;
     Config& config;
     CAEN743* caens[MAX_CAENS];
+    Processor* processors[PROCESSORS];
 
     bool payload() override;
     void beforePayload() override;
@@ -26,8 +30,10 @@ private:
     SOCKET sockfd;
     struct sockaddr_in servaddr;
     unsigned int eventCount = 0;
+    bool armed = false;
 
 public:
+    ~Crate() override;
     explicit Crate(Config& config);
     bool arm();
     Json disarm();

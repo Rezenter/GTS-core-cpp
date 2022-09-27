@@ -7,6 +7,7 @@
 #include "CAENDigitizer.h"
 #include "Config.h"
 #include "Stoppable.h"
+#include "Processor.h"
 #include "json.hpp"
 #include <vector>
 #include <array>
@@ -16,8 +17,6 @@
 
 #define MAX_TRANSFER 10 //maximum events per transaction
 #define MASTER 0 // address of the master board
-#define EVT_SIZE 34832
-#define CLOCK_FREQ 200000000 //200 MHz
 
 using Json = nlohmann::json;
 
@@ -46,26 +45,28 @@ private:
     bool payload() override;
     void beforePayload() override;
     void afterPayload() override;
-    void process();
 
     bool initialized = false;
     uint32_t numEvents;
-    int counter = 0;
+    uint32_t counter = 0;
     CAEN_DGTZ_EventInfo_t eventInfo;
+
+    Processor* processor = nullptr;
     char* eventEncoded = nullptr;
     Json results = Json::array();
+    size_t currentEvent = 0;
 
 public:
-    CAEN743(unsigned int address, unsigned int node) : address(address), chain_node(node){caenCount++;};
-    ~CAEN743();
+    CAEN743(unsigned int address, unsigned int node, Processor* processor) :
+        address(address), chain_node(node), processor(processor){caenCount++;};
+    ~CAEN743() override;
     bool isAlive();
     int init(Config& config);
     bool arm();
     bool disarm();
-    bool cyclicReadout();
     Json waitTillProcessed();
     bool releaseMemory();
-    [[nodiscard]] const int getSerial() const{return boardInfo.SerialNumber;};
+    [[nodiscard]] int getSerial() const{return boardInfo.SerialNumber;};
 
     bool eventReady = false;
 };

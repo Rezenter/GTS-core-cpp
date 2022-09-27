@@ -27,7 +27,7 @@ bool Config::load(std::string path) {
             unsigned int candidate = section.size();
             if(candidate != 0 && candidate <= MAX_CAENS){
                 caenCount = candidate;
-                for(int i = 0; i < caenCount; i++){
+                for(unsigned int i = 0; i < caenCount; i++){
                     Json caen = section[i];
                     if(caen.contains("link") && caen.contains("node")){
                         if(!(caen["link"] >= 0 && caen["link"] <= 4) || !(caen["node"] >= 0 && caen["node"] <= MAX_CAENS)){
@@ -61,38 +61,32 @@ bool Config::load(std::string path) {
     if(config.contains(key)){
         section = config[key];
 
-        key = "debugCounter";
+        key = "eventCount";
         if(section.contains(key)){
-            unsigned int candidate = section[key];
-            if(candidate >= 0){
-                debugShot = candidate;
-            }else{
-                flag = false;
-                std::cout << "Wrong value for '" << key << "' = " << candidate << '.' << std::endl;
-            }
+            shotCount = section[key];
         }else{
             flag = false;
             std::cout << "Config file missing '" << key << "', using default." << std::endl;
         }
+    }else{
+        flag = false;
+        std::cout << "Config file missing '" << key << "' section, using defaults." << std::endl;
+    }
 
-        key = "plasmaCounter";
+    key = "process";
+    if(config.contains(key)){
+        section = config[key];
+
+        key = "threads";
         if(section.contains(key)){
-            unsigned int candidate = section[key];
-            if(candidate >= 0){
-                plasmaShot = candidate;
-            }else{
-                flag = false;
-                std::cout << "Wrong value for '" << key << "' = " << candidate << '.' << std::endl;
-            }
+            processCount = section[key];
         }else{
             flag = false;
             std::cout << "Config file missing '" << key << "', using default." << std::endl;
         }
-
-        key = "isPlasma";
+        key = "queues";
         if(section.contains(key)){
-            bool candidate = section[key];
-            isPlasma = candidate;
+            queueCount = section[key];
         }else{
             flag = false;
             std::cout << "Config file missing '" << key << "', using default." << std::endl;
@@ -108,7 +102,7 @@ bool Config::load(std::string path) {
         key = "recordLength";
         if(section.contains(key)){
             unsigned int candidate = section[key];
-            if(candidate % 16 == 0 && candidate >= 0 && candidate <= 1024){
+            if(candidate % 16 == 0 && candidate <= 1024){
                 recordLength = candidate;
             }else{
                 flag = false;
@@ -122,7 +116,7 @@ bool Config::load(std::string path) {
         key = "triggerDelay";
         if(section.contains(key)){
             unsigned int candidate = section[key];
-            if(candidate >= 0 && candidate <= 64){
+            if(candidate <= 64){
                 triggerDelay = candidate;
             }else{
                 flag = false;

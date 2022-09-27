@@ -26,7 +26,7 @@ add_executable(GTS-core src/main.cpp version.h
 
         include/Server/request.hpp include/Server/header.hpp src/Server/connection.cpp
         src/Server/connection_manager.cpp src/Server/reply.cpp src/Server/request_handler.cpp src/Server/mime_types.cpp
-        src/Server/request_parser.cpp src/Server/server.cpp)
+        src/Server/request_parser.cpp src/Server/server.cpp include/FastADC/Processor.h src/FastADC/Processor.cpp)
 target_link_libraries(GTS-core ${CMAKE_CURRENT_SOURCE_DIR}/lib/CAENDigitizer.dll wsock32 ws2_32 boost_system boost_thread-mt)
 
 

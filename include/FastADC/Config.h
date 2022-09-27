@@ -6,6 +6,7 @@
 #define CAEN743_CONFIG_H
 
 #define MAX_CAENS 8
+#define PROCESSORS 4
 
 #include <string>
 #include "CAENDigitizerType.h"
@@ -25,11 +26,16 @@ public:
     unsigned int links[MAX_CAENS];
     unsigned int nodes[MAX_CAENS];
 
+    //process
+    unsigned int processCount = 4;
+    unsigned int queueCount = 2;
+
     //experiment
     unsigned int debugShot = 0;
     unsigned int plasmaShot = 0;
     bool isPlasma = false;
     Json aux_args = {};
+    unsigned int shotCount = 101;
 
     //caen
     CAEN_DGTZ_SAMFrequency_t frequency = CAEN_DGTZ_SAM_3_2GHz; // 1_6G, 800M, 400M

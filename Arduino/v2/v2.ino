@@ -15,6 +15,9 @@ In in;
 EthernetUDP Udp;
 
 void setup() {
+  analogWrite(DAC0, 0);
+  analogWrite(DAC1, 0);
+  
   Ethernet.init(10);
   Ethernet.begin(mac, IPAddress(192, 168, 10, 49));
   //Serial.begin(115200);
@@ -26,9 +29,16 @@ void setup() {
       delay(1);
     }
   }
-  //if (Ethernet.linkStatus() == LinkOFF) {
-    //Serial.println("Ethernet cable is not connected.");
-  //}
+  while (true) {
+    if (Ethernet.linkStatus() == LinkOFF) {
+      //Serial.println("Ethernet cable is not connected.");
+      delay(5000);
+    }else{
+      break;
+    }
+    delay(1);
+  }
+  
   Udp.begin(8080); // port
 
   //Serial.println("Sending...");
