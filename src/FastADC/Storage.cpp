@@ -43,7 +43,7 @@ bool Storage::saveDischarge(const Json& data) const {
         for (const auto &e : Json::to_msgpack(board)) outFile << e;
         outFile.close();
     }
-    std::cout << "Files written" << std::endl;
+    std::cout << "Files written: " << pathStr << std::endl;
     return true;
 }
 

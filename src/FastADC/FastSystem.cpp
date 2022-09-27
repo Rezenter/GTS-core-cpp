@@ -97,6 +97,11 @@ Json FastSystem::requestHandler(Json req){
                     } else {
                         config->aux_args = {};
                     }
+                    if (req.contains("is_plasma")) {
+                        config->isPlasma = req.at("is_plasma");
+                    }else{
+                        config->isPlasma = false;
+                    }
                     if (!this->arm()) {
                         resp["ok"] = false;
                         resp["err"] = "internal fail";
