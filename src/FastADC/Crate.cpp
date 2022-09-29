@@ -64,12 +64,10 @@ Json Crate::disarm() {
     std::cout << "disarming..." << std::endl;
     Json result = {
             {"header", {
-                               {"version", 2},
-                               {"error", true},
+                               {"version", 3},
                                {"eventLength", config.recordLength},
                                {"frequency", config.freqStr()},
                                {"boards", Json::array()},
-                               {"triggerThreshold", config.triggerThreshold},
                                {"offset", config.offset},
                                {"aux", config.aux_args}
                        }
@@ -79,13 +77,18 @@ Json Crate::disarm() {
     for(unsigned int count = 0; count < config.caenCount; count++){
         caens[count]->disarm();
         processors[count]->disarm();
-        result["boards"].push_back(processors[count]->result);
+        Json board = {
+                {
+                        {"raw", processors[count]->result},
+                        {"ph_el", processors[count]->ph_el}
+                }
+        };
+        result["boards"].push_back(board);
         result["header"]["boards"].push_back(caens[count]->getSerial());
         caens[count]->releaseMemory();
     }
     this->requestStop();
     std::cout << "all joined" << std::endl;
-    result["header"]["error"] = false;
     associatedThread.join();
     return result;
 }

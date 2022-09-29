@@ -26,21 +26,39 @@ bool Processor::payload() {
         w = written.load(std::memory_order_acquire);
     }
     while(p < w){
-        /*
-        CAEN_DGTZ_DecodeEvent(handles[board], encodedEvents[board][counts[board]], (void**)(&decodedEvents[board][counts[board]]));
+        p++;
+        CAEN_DGTZ_DecodeEvent(handle, encodedEvents[p], (void**)(&decodedEvents[p]));
         for(int groupIdx = 0; groupIdx < MAX_V1743_GROUP_SIZE; groupIdx++){
-            if(decodedEvents[board][counts[board]]->GrPresent[groupIdx]){
-                group = &decodedEvents[board][counts[board]]->DataGroup[groupIdx];
-
+            if(decodedEvents[p]->GrPresent[groupIdx]){
+                size_t ch1 = 2 * groupIdx;
+                size_t ch2 = ch1 + 1;
+                group = &decodedEvents[p]->DataGroup[groupIdx];
                 for(unsigned int cell = 0; cell < config.recordLength; cell++){
-                    result[board][counts[board]][2 * groupIdx][cell] = config.offset + group->DataChannel[0][cell] * resolution;
-                    result[board][counts[board]][1 + 2 * groupIdx][cell] = config.offset + group->DataChannel[1][cell] * resolution;
+                    result[p][ch1][cell] = config.offset + group->DataChannel[0][cell] * resolution;
+                    if(zeroInd[ch1].first < cell && cell <= zeroInd[ch1].second){
+                        zero[p][ch1] += result[p][ch1][cell];
+                    } else if(signalInd[ch1].first < cell && cell <= signalInd[ch1].second){
+                        ph_el[p][ch1] += result[p][ch1][cell];
+                    }
+
+                    result[p][ch2][cell] = config.offset + group->DataChannel[1][cell] * resolution;
+                    if(zeroInd[ch2].first < cell && cell <= zeroInd[ch2].second){
+                        zero[p][ch2] += result[p][ch2][cell];
+                    } else if(signalInd[ch2].first < cell && cell <= signalInd[ch2].second){
+                        ph_el[p][ch2] += result[p][ch2][cell];
+                    }
                 }
+                zero[p][ch1] *= 1 / (double)(zeroInd[ch1].second - zeroInd[ch1].first);
+                zero[p][ch2] *= 1 / (double)(zeroInd[ch2].second - zeroInd[ch2].first);
+
+                ph_el[p][ch1] -= zero[p][ch1] * (double)(signalInd[ch1].second - signalInd[ch1].first);
+                ph_el[p][ch2] -= zero[p][ch2] * (double)(signalInd[ch2].second - signalInd[ch2].first);
+
+                ph_el[p][ch1] *= 0.78125; // 0.3125e-9 * 1e-3 / (1e2 * 1.6e-19 * 1e4 * 2.5 * 2) * 2
+                ph_el[p][ch2] *= 0.78125;
             }
         }
-         */
         processed++;
-        p++;
     }
     return false;
 }

@@ -7,7 +7,7 @@ _ch_count = 2
 
 DB_PATH = 'd:/data/db/'
 DEBUG_SHOTS = 'debug/'
-shotn = 565
+shotn = 596
 
 print(shotn)
 shot_folder = '%s%05d' % (path, shotn)

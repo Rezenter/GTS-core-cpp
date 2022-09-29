@@ -28,6 +28,43 @@ private:
     CAEN_DGTZ_X743_EVENT_t* decodedEvents[SHOT_COUNT];
     CAEN_DGTZ_X743_GROUP_t* group;
 
+    constexpr const static std::pair<size_t, size_t> zeroInd[16] = {
+            {100, 200},
+            {10, 500},
+            {10, 500},
+            {10, 500},
+            {10, 500},
+            {10, 500},
+            {10, 500},
+            {10, 500},
+            {10, 500},
+            {10, 500},
+            {10, 500},
+            {10, 500},
+            {10, 500},
+            {10, 500},
+            {10, 500},
+            {10, 500}
+    };
+    constexpr const static std::pair<size_t, size_t> signalInd[16] = {
+            {240, 400},
+            {520, 670},
+            {520, 670},
+            {520, 670},
+            {520, 670},
+            {520, 670},
+            {520, 670},
+            {520, 670},
+            {520, 670},
+            {520, 670},
+            {520, 670},
+            {520, 670},
+            {520, 670},
+            {520, 670},
+            {520, 670},
+            {520, 670}
+    };
+
 public:
     bool arm();
     bool disarm();
@@ -35,6 +72,8 @@ public:
     ~Processor() override;
 
     std::array<std::array<std::array<double, PAGE_LENGTH>, CH_COUNT>, SHOT_COUNT> result;
+    std::array<std::array<double, CH_COUNT>, SHOT_COUNT> zero;
+    std::array<std::array<double, CH_COUNT>, SHOT_COUNT> ph_el;
     char encodedEvents[EVT_SIZE][SHOT_COUNT];
     std::atomic_int written;
     std::atomic_int processed;
