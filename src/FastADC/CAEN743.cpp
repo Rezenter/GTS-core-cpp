@@ -8,12 +8,10 @@
 
 #include "include/FastADC/CAEN743.h"
 
-unsigned char CAEN743::caenCount = 0;
-
 int CAEN743::init(Config& config){
     this->config = &config;
     ret = CAEN_DGTZ_OpenDigitizer(CAEN_DGTZ_OpticalLink, address, chain_node, 0, &handle);
-    processor->handles[chain_node] = handle;
+    processor->handle = handle;
     if(ret != CAEN_DGTZ_Success) {
         printf("Can't open digitizer (%d, %d)\n", address, chain_node);
         return CAEN_Error_Connection;
@@ -92,7 +90,6 @@ CAEN743::~CAEN743() {
 }
 
 bool CAEN743::arm() {
-    processor[chain_node].arm();
     ret = CAEN_DGTZ_ClearData(handle);
     ret = CAEN_DGTZ_SWStartAcquisition(handle);
 
@@ -104,7 +101,7 @@ bool CAEN743::arm() {
 
 bool CAEN743::disarm() {
     requestStop();
-    processor[chain_node].disarm();
+    associatedThread.join();
     return true;
 }
 
@@ -112,18 +109,18 @@ bool CAEN743::payload() {
     CAEN_DGTZ_ReadData(handle,CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT, buffer, &bufferSize);
     ret = CAEN_DGTZ_GetNumEvents(handle, buffer, bufferSize, &numEvents);
     if(numEvents != 0){
-        CAEN_DGTZ_SendSWtrigger(handle);
+        //CAEN_DGTZ_SendSWtrigger(handle);
         //!!!WARNING!!! debug only
 
         for(counter = 0; counter < numEvents; counter++){
             CAEN_DGTZ_GetEventInfo(handle, buffer, bufferSize, counter, &eventInfo, &eventEncoded);
-            memcpy(&processor->encodedEvents[chain_node][currentEvent], eventEncoded, EVT_SIZE);
-            processor->mutex.lock();
-            processor->eventFlags[chain_node][currentEvent] = true;
-            processor->mutex.unlock();
+            memcpy(&processor->encodedEvents[currentEvent], eventEncoded, EVT_SIZE);
+            processor->written.store(currentEvent, std::memory_order_release);
+            processor->written.notify_one();
+            //std::cout << processor->written.load() << std::endl;
             currentEvent++;
             if(currentEvent == SHOT_COUNT){
-                std::cout << "Warning! more than expected event count." << std::endl;
+                //std::cout << "CAEN 101" << std::endl;
                 return true;
             }
         }
@@ -132,7 +129,6 @@ bool CAEN743::payload() {
 }
 
 void CAEN743::afterPayload() {
-    //std::cout << "after payload" << std::endl;
     ret = CAEN_DGTZ_SWStopAcquisition(handle);
     if(ret != 0){
         std::cout << "failed to stop ADC = " << ret << std::endl;
@@ -147,14 +143,6 @@ void CAEN743::beforePayload() {
     currentEvent = 0;
     //ret = CAEN_DGTZ_ClearData(handle);
 }
-
-Json CAEN743::waitTillProcessed() {
-    associatedThread.join();
-    std::cout << "redirect to processor" << std::endl;
-    //std::cout << "thread " << (int)address << " joined" << std::endl;
-    return results;
-}
-
 
 bool CAEN743::releaseMemory() {
     results.clear();

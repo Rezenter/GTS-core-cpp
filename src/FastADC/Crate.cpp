@@ -15,21 +15,17 @@ Crate::Crate(Config &config) : config(config) {
 
 Crate::~Crate(){
     disarm();
-    for(unsigned int count = 0; count < config.processCount; count++){
-        delete processors[count];
-    }
     for(unsigned int count = 0; count < config.caenCount; count++){
         delete caens[count];
+        delete processors[count];
     }
 }
 
 bool Crate::init() {
     armed = false;
-    for(unsigned int count = 0; count < config.processCount; count++){
-        processors[count] = new Processor(this->config);
-    }
     for(unsigned int count = 0; count < config.caenCount; count++){
-        caens[count] = new CAEN743(config.links[count], config.nodes[count], processors[config.links[count]]);
+        processors[count] = new Processor(this->config);
+        caens[count] = new CAEN743(config.links[count], config.nodes[count], processors[count]);
         caens[count]->init(config);
         if(!caens[count]->isAlive()){
             std::cout << "board " << count << " not initialised!" << std::endl;
@@ -45,6 +41,7 @@ bool Crate::arm() {
     }
     armed = true;
     for(unsigned int count = 0; count < config.caenCount; count++){
+        processors[count]->arm();
         if(!caens[count]->arm()) {
             return false;
         }
@@ -65,30 +62,28 @@ Json Crate::disarm() {
     }
     armed = false;
     std::cout << "disarming..." << std::endl;
+    Json result = {
+            {"header", {
+                               {"version", 2},
+                               {"error", true},
+                               {"eventLength", config.recordLength},
+                               {"frequency", config.freqStr()},
+                               {"boards", Json::array()},
+                               {"triggerThreshold", config.triggerThreshold},
+                               {"offset", config.offset},
+                               {"aux", config.aux_args}
+                       }
+            },
+            {"boards", Json::array()}
+    };
     for(unsigned int count = 0; count < config.caenCount; count++){
         caens[count]->disarm();
-    }
-    this->requestStop();
-    Json result = {
-        {"header", {
-                {"version", 2},
-                {"error", true},
-                {"eventLength", config.recordLength},
-                {"frequency", config.freqStr()},
-                {"boards", Json::array()},
-                {"triggerThreshold", config.triggerThreshold},
-                {"offset", config.offset},
-                {"aux", config.aux_args}
-            }
-        },
-        {"boards", Json::array()}
-    };
-
-    for(unsigned int count = 0; count < config.caenCount; count++) {
-        result["boards"].push_back(caens[count]->waitTillProcessed());
+        processors[count]->disarm();
+        result["boards"].push_back(processors[count]->result);
         result["header"]["boards"].push_back(caens[count]->getSerial());
         caens[count]->releaseMemory();
     }
+    this->requestStop();
     std::cout << "all joined" << std::endl;
     result["header"]["error"] = false;
     associatedThread.join();
@@ -106,17 +101,12 @@ bool Crate::isAlive() {
 }
 
 bool Crate::payload() {
-    //check, if all caens are ready and send data
-    std::cout << "WRONG!!!" << std::endl;
-    for(unsigned int index = 0; index < config.caenCount; index++){
-        if(!caens[index]->eventReady){
+    for(unsigned int count = 0; count < config.caenCount; count++){
+        if(processors[count]->processed.load(std::memory_order_acquire) < eventCount){
             return false;
         }
     }
-    for(unsigned int index = 0; index < config.caenCount; index++){
-        caens[index]->eventReady = false;
-    }
-    buffer.val = eventCount * 4096 * 10 / 100;
+    buffer.val = eventCount * 409.6;
     eventCount++;
     sendto(sockfd, buffer.chars, 2,
            0, (const struct sockaddr *) &servaddr,
@@ -139,5 +129,6 @@ void Crate::beforePayload() {
 void Crate::afterPayload() {
     //close socket
     closesocket(sockfd);
+    std::cout << "crate events: " << eventCount << std::endl;
     eventCount = 0;
 }

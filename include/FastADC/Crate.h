@@ -21,7 +21,7 @@ private:
     Buffer buffer;
     Config& config;
     CAEN743* caens[MAX_CAENS];
-    Processor* processors[PROCESSORS];
+    Processor* processors[MAX_CAENS];
 
     bool payload() override;
     void beforePayload() override;
@@ -29,7 +29,7 @@ private:
 
     SOCKET sockfd;
     struct sockaddr_in servaddr;
-    unsigned int eventCount = 0;
+    int eventCount = 0;
     bool armed = false;
 
 public:

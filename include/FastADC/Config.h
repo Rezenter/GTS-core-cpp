@@ -6,7 +6,6 @@
 #define CAEN743_CONFIG_H
 
 #define MAX_CAENS 8
-#define PROCESSORS 4
 
 #include <string>
 #include "CAENDigitizerType.h"
@@ -22,13 +21,9 @@ private:
 public:
     [[nodiscard]] std::string freqStr() const;
     //crate
-    unsigned int caenCount = 4;
+    unsigned int caenCount = 8;
     unsigned int links[MAX_CAENS];
     unsigned int nodes[MAX_CAENS];
-
-    //process
-    unsigned int processCount = 4;
-    unsigned int queueCount = 2;
 
     //experiment
     unsigned int debugShot = 0;
@@ -52,7 +47,7 @@ public:
     std::string plasmaShotnPath = "z:/SHOTN.txt";
     std::string debugShotnPath = "d:/data/db/debug/SHOTN.txt";
 
-    bool load(std::string path = "d:/data/db/config.json");
+    bool load(std::string path = "d:/data/db/config_debug.json");
 };
 
 

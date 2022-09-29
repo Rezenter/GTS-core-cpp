@@ -73,29 +73,6 @@ bool Config::load(std::string path) {
         std::cout << "Config file missing '" << key << "' section, using defaults." << std::endl;
     }
 
-    key = "process";
-    if(config.contains(key)){
-        section = config[key];
-
-        key = "threads";
-        if(section.contains(key)){
-            processCount = section[key];
-        }else{
-            flag = false;
-            std::cout << "Config file missing '" << key << "', using default." << std::endl;
-        }
-        key = "queues";
-        if(section.contains(key)){
-            queueCount = section[key];
-        }else{
-            flag = false;
-            std::cout << "Config file missing '" << key << "', using default." << std::endl;
-        }
-    }else{
-        flag = false;
-        std::cout << "Config file missing '" << key << "' section, using defaults." << std::endl;
-    }
-
     key = "caen";
     if(config.contains(key)){
         section = config[key];

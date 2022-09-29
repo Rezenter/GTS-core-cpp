@@ -3,6 +3,7 @@ import json
 import statistics
 import os
 import ijson
+import msgpack
 
 path = 'd:/data/db/debug/raw/'
 group_count = 8
@@ -25,7 +26,7 @@ with open(shot_filename, 'r') as shotn_file:
 print(shotn)
 #shotn = 287
 shot_folder = '%s%05d' % (path, shotn)
-FILE_EXT = 'json'
+FILE_EXT = 'msgpk'
 
 
 

@@ -9,6 +9,7 @@
 #include "Stoppable.h"
 #include <array>
 #include "CAENDigitizer.h"
+#include <atomic>
 
 #define EVT_SIZE 34832
 #define SHOT_COUNT 101
@@ -18,29 +19,26 @@
 class Processor : public Stoppable{
 private:
     Config& config;
-    static const size_t boardCount = 2;
     CAEN_DGTZ_ErrorCode ret;
     bool payload() override;
     void beforePayload() override;
     void afterPayload() override;
+    constexpr static const double resolution = 2500.0 / 4096;
 
-
-    std::array<size_t, boardCount> counts;
-
-    void process(size_t board);
-    std::array<std::array<std::array<std::array<double, PAGE_LENGTH>, CH_COUNT>, SHOT_COUNT>, boardCount> result;
-    std::array<std::array<CAEN_DGTZ_X743_EVENT_t*, SHOT_COUNT>, boardCount> decodedEvents;
+    CAEN_DGTZ_X743_EVENT_t* decodedEvents[SHOT_COUNT];
+    CAEN_DGTZ_X743_GROUP_t* group;
 
 public:
     bool arm();
     bool disarm();
-    mutable std::mutex mutex;
     explicit Processor(Config& config);
     ~Processor() override;
 
-    std::array<std::array<char[EVT_SIZE], SHOT_COUNT>, boardCount> encodedEvents;
-    std::array<std::array<bool, SHOT_COUNT>, boardCount> eventFlags;
-    std::array<int, boardCount> handles;
+    std::array<std::array<std::array<double, PAGE_LENGTH>, CH_COUNT>, SHOT_COUNT> result;
+    char encodedEvents[EVT_SIZE][SHOT_COUNT];
+    std::atomic_int written;
+    std::atomic_int processed;
+    int handle;
 };
 
 #endif //GTS_CORE_PROCESSOR_H
