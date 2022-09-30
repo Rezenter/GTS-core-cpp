@@ -46,6 +46,7 @@ bool Crate::arm() {
             return false;
         }
     }
+    DAC1.fill(0);
     associatedThread = std::thread([&](){
         run();
     });
@@ -82,7 +83,8 @@ Json Crate::disarm() {
             board.push_back({
                                     {"ch", processors[count]->result[event_ind]},
                                     {"ph_el", processors[count]->ph_el[event_ind]},
-                                    {"t", processors[count]->times[event_ind]}
+                                    {"t", processors[count]->times[event_ind]},
+                                    {"DAC1", DAC1[event_ind]}
                             });
         }
 
@@ -112,7 +114,15 @@ bool Crate::payload() {
             return false;
         }
     }
-    buffer.val = eventCount * 409.6;
+    double ph_el = 0;
+    for(size_t ch = 0; ch < 5; ch++){
+        ph_el += processors[1]->ph_el[eventCount][ch + 11];
+    }
+    buffer.val = floor(ph_el * 0.0585);
+    if(buffer.val > 4095){
+        buffer.val = 4095;
+    }
+    DAC1[eventCount] = buffer.val;
     eventCount++;
     sendto(sockfd, buffer.chars, 2,
            0, (const struct sockaddr *) &servaddr,
@@ -130,6 +140,11 @@ void Crate::beforePayload() {
     servaddr.sin_port = htons(8080);
     servaddr.sin_addr.s_addr = inet_addr("192.168.10.49");
     eventCount = 0;
+
+    buffer.val = 0;
+    sendto(sockfd, buffer.chars, 2,
+           0, (const struct sockaddr *) &servaddr,
+           sizeof(servaddr));
 }
 
 void Crate::afterPayload() {
@@ -137,4 +152,8 @@ void Crate::afterPayload() {
     closesocket(sockfd);
     std::cout << "crate events: " << eventCount << std::endl;
     eventCount = 0;
+    buffer.val = 0;
+    sendto(sockfd, buffer.chars, 2,
+           0, (const struct sockaddr *) &servaddr,
+           sizeof(servaddr));
 }

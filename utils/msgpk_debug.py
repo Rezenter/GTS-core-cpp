@@ -1,21 +1,21 @@
 import json
 import msgpack
 
-path = 'd:/data/db/debug/raw/'
+path = 'd:/data/db/plasma/raw/'
 group_count = 8
 _ch_count = 2
 
-DB_PATH = 'd:/data/db/'
-DEBUG_SHOTS = 'debug/'
-shotn = 597
+shotn = 42336
 
 print(shotn)
 shot_folder = '%s%05d' % (path, shotn)
 FILE_EXT = 'msgpk'
 
-with open('%s/%s.%s' % (shot_folder, '0', FILE_EXT), 'rb') as file:
+with open('%s/%s.%s' % (shot_folder, '1', FILE_EXT), 'rb') as file:
     data = msgpack.unpackb(file.read())
-    with open('tmp.json', 'w') as out_file:
-        json.dump(data, out_file)
+    #with open('tmp.json', 'w') as out_file:
+    #    json.dump(data, out_file)
+    for event in data:
+        print(event['DAC1'], event['ph_el'][11: 15])
 
 print('Code OK')

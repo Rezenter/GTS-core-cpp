@@ -99,7 +99,7 @@ bool Processor::arm() {
 
 bool Processor::disarm() {
     requestStop();
-    written.store(-1);
+    written.store(-2);
     written.notify_one();
     associatedThread.join();
     return false;

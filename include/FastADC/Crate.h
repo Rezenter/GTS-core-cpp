@@ -31,6 +31,7 @@ private:
     struct sockaddr_in servaddr;
     int eventCount = 0;
     bool armed = false;
+    std::array<unsigned short , SHOT_COUNT> DAC1;
 
 public:
     ~Crate() override;
