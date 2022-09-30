@@ -74,6 +74,7 @@ public:
     std::array<std::array<std::array<double, PAGE_LENGTH>, CH_COUNT>, SHOT_COUNT> result;
     std::array<std::array<double, CH_COUNT>, SHOT_COUNT> zero;
     std::array<std::array<double, CH_COUNT>, SHOT_COUNT> ph_el;
+    std::array<double, SHOT_COUNT> times;
     char encodedEvents[EVT_SIZE][SHOT_COUNT];
     std::atomic_int written;
     std::atomic_int processed;

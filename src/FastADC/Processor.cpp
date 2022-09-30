@@ -33,6 +33,9 @@ bool Processor::payload() {
                 size_t ch1 = 2 * groupIdx;
                 size_t ch2 = ch1 + 1;
                 group = &decodedEvents[p]->DataGroup[groupIdx];
+                if(groupIdx == 0){
+                    times[p] = 5e-6 * group->TDC;
+                }
                 for(unsigned int cell = 0; cell < config.recordLength; cell++){
                     result[p][ch1][cell] = config.offset + group->DataChannel[0][cell] * resolution;
                     if(zeroInd[ch1].first < cell && cell <= zeroInd[ch1].second){
@@ -78,9 +81,13 @@ void Processor::afterPayload() {
 bool Processor::arm() {
     for(size_t evenInd = 0; evenInd < SHOT_COUNT; evenInd++){
         CAEN_DGTZ_AllocateEvent(handle, (void**)(&decodedEvents[evenInd]));
+        times[evenInd] = 0.0;
         for(size_t ch_ind = 0; ch_ind < CH_COUNT; ch_ind++){
+            zero[evenInd][ch_ind] = 0.0;
+            ph_el[evenInd][ch_ind] = 0.0;
             for(size_t cell_ind = 0; cell_ind < PAGE_LENGTH; cell_ind++){
                 result[evenInd][ch_ind][cell_ind] = 0.0;
+
             }
         }
     }

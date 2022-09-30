@@ -77,12 +77,15 @@ Json Crate::disarm() {
     for(unsigned int count = 0; count < config.caenCount; count++){
         caens[count]->disarm();
         processors[count]->disarm();
-        Json board = {
-                {
-                        {"raw", processors[count]->result},
-                        {"ph_el", processors[count]->ph_el}
-                }
-        };
+        Json board = Json::array();
+        for(size_t event_ind = 0; event_ind < SHOT_COUNT; event_ind++){
+            board.push_back({
+                                    {"ch", processors[count]->result[event_ind]},
+                                    {"ph_el", processors[count]->ph_el[event_ind]},
+                                    {"t", processors[count]->times[event_ind]}
+                            });
+        }
+
         result["boards"].push_back(board);
         result["header"]["boards"].push_back(caens[count]->getSerial());
         caens[count]->releaseMemory();
