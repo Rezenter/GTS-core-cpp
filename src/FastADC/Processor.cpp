@@ -21,11 +21,11 @@ bool Processor::payload() {
     //std::cout << '!' << std::endl;
     int p = processed.load();
     int w = written.load(std::memory_order_acquire);
-    if(p >= w){
+    if(w <= p){
         written.wait(w);
         w = written.load(std::memory_order_acquire);
     }
-    while(p < w){
+    while(p <= w){
         p++;
         CAEN_DGTZ_DecodeEvent(handle, encodedEvents[p], (void**)(&decodedEvents[p]));
         for(int groupIdx = 0; groupIdx < MAX_V1743_GROUP_SIZE; groupIdx++){
