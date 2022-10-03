@@ -5,9 +5,8 @@ path = 'd:/data/db/plasma/raw/'
 group_count = 8
 _ch_count = 2
 
-shotn = 42336
+shotn = 42339
 
-print(shotn)
 shot_folder = '%s%05d' % (path, shotn)
 FILE_EXT = 'msgpk'
 

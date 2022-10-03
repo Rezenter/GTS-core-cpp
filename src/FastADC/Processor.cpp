@@ -25,7 +25,7 @@ bool Processor::payload() {
         written.wait(w);
         w = written.load(std::memory_order_acquire);
     }
-    while(p <= w){
+    while(p < w){
         p++;
         CAEN_DGTZ_DecodeEvent(handle, encodedEvents[p], (void**)(&decodedEvents[p]));
         for(int groupIdx = 0; groupIdx < MAX_V1743_GROUP_SIZE; groupIdx++){
@@ -61,8 +61,8 @@ bool Processor::payload() {
                 ph_el[p][ch2] *= 0.78125;
             }
         }
-        processed++;
     }
+    processed.store(p);
     return false;
 }
 

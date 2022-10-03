@@ -51,6 +51,7 @@ bool Crate::arm() {
         run();
     });
     std::cout << "armed" << std::endl;
+    std::cout << "\n\n\nWARNING!!! not normalised on Elas!!!" << std::endl;
     return true;
 }
 
@@ -118,10 +119,9 @@ bool Crate::payload() {
     for(size_t ch = 0; ch < 5; ch++){
         ph_el += processors[1]->ph_el[eventCount][ch + 11];
     }
-    buffer.val = floor(ph_el * 0.0585);
-    if(buffer.val > 4095){
-        buffer.val = 4095;
-    }
+    ph_el = fmax(0.0, ph_el) * 0.0585;
+    ph_el = fmin(4095, ph_el);
+    buffer.val = floor(ph_el);
     DAC1[eventCount] = buffer.val;
     eventCount++;
     sendto(sockfd, buffer.chars, 2,
