@@ -114,10 +114,9 @@ bool CAEN743::payload() {
 
         for(counter = 0; counter < numEvents; counter++){
             CAEN_DGTZ_GetEventInfo(handle, buffer, bufferSize, counter, &eventInfo, &eventEncoded);
-            memcpy(&processor->encodedEvents[currentEvent], eventEncoded, EVT_SIZE);
-            processor->written.store(currentEvent, std::memory_order_release);
-            processor->written.notify_one();
-            //std::cout << processor->written.load() << std::endl;
+            //memcpy(&processor->encodedEvents[currentEvent], eventEncoded, EVT_SIZE);
+            CAEN_DGTZ_DecodeEvent(handle, eventEncoded, (void**)(&processor->decodedEvents[currentEvent]));
+            processor->written->release();
             currentEvent++;
             if(currentEvent == SHOT_COUNT){
                 //std::cout << "CAEN 101" << std::endl;
@@ -142,14 +141,5 @@ void CAEN743::afterPayload() {
 void CAEN743::beforePayload() {
     currentEvent = 0;
     //ret = CAEN_DGTZ_ClearData(handle);
-}
-
-bool CAEN743::releaseMemory() {
-    results.clear();
-    for(char* event : events){
-        delete[] event;
-    }
-    events.clear();
-    return false;
 }
 

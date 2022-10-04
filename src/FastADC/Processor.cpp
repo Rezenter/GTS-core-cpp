@@ -4,7 +4,7 @@
 
 #include "include/FastADC/Processor.h"
 
-Processor::Processor(Config& config) : config(config){
+Processor::Processor(Config& config, std::array<std::latch*, SHOT_COUNT>& processed) : config(config), processed(processed){
 
 }
 
@@ -19,63 +19,58 @@ Processor::~Processor(){
 bool Processor::payload() {
     //std::cout << processed.load() << ' ' << written.load() << std::endl;
     //std::cout << '!' << std::endl;
-    int p = processed.load();
-    int w = written.load(std::memory_order_acquire);
-    if(w <= p){
-        written.wait(w);
-        w = written.load(std::memory_order_acquire);
-    }
-    while(p < w){
-        p++;
-        CAEN_DGTZ_DecodeEvent(handle, encodedEvents[p], (void**)(&decodedEvents[p]));
+
+    if(written->try_acquire_for(std::chrono::microseconds(100))){
         for(int groupIdx = 0; groupIdx < MAX_V1743_GROUP_SIZE; groupIdx++){
-            if(decodedEvents[p]->GrPresent[groupIdx]){
+            if(decodedEvents[current_index]->GrPresent[groupIdx]){
                 size_t ch1 = 2 * groupIdx;
                 size_t ch2 = ch1 + 1;
-                group = &decodedEvents[p]->DataGroup[groupIdx];
+                group = &decodedEvents[current_index]->DataGroup[groupIdx];
                 if(groupIdx == 0){
-                    times[p] = 5e-6 * group->TDC;
+                    times[current_index] = 5e-6 * (double)group->TDC;
                 }
                 for(unsigned int cell = 0; cell < config.recordLength; cell++){
-                    result[p][ch1][cell] = config.offset + group->DataChannel[0][cell] * resolution;
+                    result[current_index][ch1][cell] = config.offset + group->DataChannel[0][cell] * resolution;
                     if(zeroInd[ch1].first < cell && cell <= zeroInd[ch1].second){
-                        zero[p][ch1] += result[p][ch1][cell];
+                        zero[current_index][ch1] += result[current_index][ch1][cell];
                     } else if(signalInd[ch1].first < cell && cell <= signalInd[ch1].second){
-                        ph_el[p][ch1] += result[p][ch1][cell];
+                        ph_el[current_index][ch1] += result[current_index][ch1][cell];
                     }
 
-                    result[p][ch2][cell] = config.offset + group->DataChannel[1][cell] * resolution;
+                    result[current_index][ch2][cell] = config.offset + group->DataChannel[1][cell] * resolution;
                     if(zeroInd[ch2].first < cell && cell <= zeroInd[ch2].second){
-                        zero[p][ch2] += result[p][ch2][cell];
+                        zero[current_index][ch2] += result[current_index][ch2][cell];
                     } else if(signalInd[ch2].first < cell && cell <= signalInd[ch2].second){
-                        ph_el[p][ch2] += result[p][ch2][cell];
+                        ph_el[current_index][ch2] += result[current_index][ch2][cell];
                     }
                 }
-                zero[p][ch1] *= 1 / (double)(zeroInd[ch1].second - zeroInd[ch1].first);
-                zero[p][ch2] *= 1 / (double)(zeroInd[ch2].second - zeroInd[ch2].first);
+                zero[current_index][ch1] *= 1 / (double)(zeroInd[ch1].second - zeroInd[ch1].first);
+                zero[current_index][ch2] *= 1 / (double)(zeroInd[ch2].second - zeroInd[ch2].first);
 
-                ph_el[p][ch1] -= zero[p][ch1] * (double)(signalInd[ch1].second - signalInd[ch1].first);
-                ph_el[p][ch2] -= zero[p][ch2] * (double)(signalInd[ch2].second - signalInd[ch2].first);
+                ph_el[current_index][ch1] -= zero[current_index][ch1] * (double)(signalInd[ch1].second - signalInd[ch1].first);
+                ph_el[current_index][ch2] -= zero[current_index][ch2] * (double)(signalInd[ch2].second - signalInd[ch2].first);
 
-                ph_el[p][ch1] *= 0.78125; // 0.3125e-9 * 1e-3 / (1e2 * 1.6e-19 * 1e4 * 2.5 * 2) * 2
-                ph_el[p][ch2] *= 0.78125;
+                ph_el[current_index][ch1] *= 0.78125; // 0.3125e-9 * 1e-3 / (1e2 * 1.6e-19 * 1e4 * 2.5 * 2) * 2
+                ph_el[current_index][ch2] *= 0.78125;
             }
         }
+        processed[current_index]->count_down();
+        current_index++;
     }
-    processed.store(p);
     return false;
 }
 
 void Processor::beforePayload() {
-    written.store(-1);
-    processed.store(-1);
+    current_index = 0;
+    written = new std::counting_semaphore<SHOT_COUNT>(0);
 }
 
 void Processor::afterPayload() {
     for(size_t evenInd = 0; evenInd < SHOT_COUNT; evenInd++) {
         CAEN_DGTZ_FreeEvent(handle, (void **) (&decodedEvents[evenInd]));
     }
-    std::cout << "processor events: " << processed.load(std::memory_order_acquire) << std::endl;
+    std::cout << "processor events: " << current_index << std::endl;
+    delete written;
 }
 
 bool Processor::arm() {
@@ -99,8 +94,6 @@ bool Processor::arm() {
 
 bool Processor::disarm() {
     requestStop();
-    written.store(-2);
-    written.notify_one();
     associatedThread.join();
     return false;
 }

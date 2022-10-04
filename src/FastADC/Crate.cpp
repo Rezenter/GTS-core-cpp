@@ -24,7 +24,7 @@ Crate::~Crate(){
 bool Crate::init() {
     armed = false;
     for(unsigned int count = 0; count < config.caenCount; count++){
-        processors[count] = new Processor(this->config);
+        processors[count] = new Processor(this->config, this->processed);
         caens[count] = new CAEN743(config.links[count], config.nodes[count], processors[count]);
         caens[count]->init(config);
         if(!caens[count]->isAlive()){
@@ -50,6 +50,9 @@ bool Crate::arm() {
     associatedThread = std::thread([&](){
         run();
     });
+    for(size_t evenInd = 0; evenInd < SHOT_COUNT; evenInd++) {
+        processed[evenInd] = new std::latch(config.caenCount);
+    }
     std::cout << "armed" << std::endl;
     std::cout << "\n\n\nWARNING!!! not normalised on Elas!!!" << std::endl;
     return true;
@@ -91,7 +94,6 @@ Json Crate::disarm() {
 
         result["boards"].push_back(board);
         result["header"]["boards"].push_back(caens[count]->getSerial());
-        caens[count]->releaseMemory();
     }
     this->requestStop();
     std::cout << "all joined" << std::endl;
@@ -110,23 +112,30 @@ bool Crate::isAlive() {
 }
 
 bool Crate::payload() {
-    for(unsigned int count = 0; count < config.caenCount; count++){
-        if(processors[count]->processed.load(std::memory_order_acquire) < eventCount){
-            return false;
+    if(processed[currentEvent]->try_wait()){
+        double ph_el = 0;
+        for(size_t ch = 0; ch < 5; ch++){
+            ph_el += processors[1]->ph_el[currentEvent][ch + 11];
         }
+
+        ph_el = currentEvent * 400.0 * 17;
+
+        ph_el = fmax(0.0, ph_el) * 0.0585;
+        ph_el = fmin(4095, ph_el);
+        buffer.val = floor(ph_el);
+        DAC1[currentEvent] = buffer.val;
+        currentEvent++;
+        sendto(sockfd, buffer.chars, 2,
+               0, (const struct sockaddr *) &servaddr,
+               sizeof(servaddr));
+    }else{
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
+        return false;
     }
-    double ph_el = 0;
-    for(size_t ch = 0; ch < 5; ch++){
-        ph_el += processors[1]->ph_el[eventCount][ch + 11];
+
+    if(currentEvent == SHOT_COUNT){
+        return true;
     }
-    ph_el = fmax(0.0, ph_el) * 0.0585;
-    ph_el = fmin(4095, ph_el);
-    buffer.val = floor(ph_el);
-    DAC1[eventCount] = buffer.val;
-    eventCount++;
-    sendto(sockfd, buffer.chars, 2,
-           0, (const struct sockaddr *) &servaddr,
-           sizeof(servaddr));
     return false;
 }
 
@@ -139,7 +148,7 @@ void Crate::beforePayload() {
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(8080);
     servaddr.sin_addr.s_addr = inet_addr("192.168.10.49");
-    eventCount = 0;
+    currentEvent = 0;
 
     buffer.val = 0;
     sendto(sockfd, buffer.chars, 2,
@@ -150,10 +159,12 @@ void Crate::beforePayload() {
 void Crate::afterPayload() {
     //close socket
     closesocket(sockfd);
-    std::cout << "crate events: " << eventCount << std::endl;
-    eventCount = 0;
+    std::cout << "crate events: " << currentEvent << std::endl;
     buffer.val = 0;
     sendto(sockfd, buffer.chars, 2,
            0, (const struct sockaddr *) &servaddr,
            sizeof(servaddr));
+    for(size_t evenInd = 0; evenInd < SHOT_COUNT; evenInd++) {
+        delete processed[evenInd];
+    }
 }

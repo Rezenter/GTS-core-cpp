@@ -10,6 +10,10 @@
 #include <array>
 #include "CAENDigitizer.h"
 #include <atomic>
+#include <semaphore>
+#include <chrono>
+#include <latch>
+#include <mutex>
 
 #define EVT_SIZE 34832
 #define SHOT_COUNT 101
@@ -25,8 +29,11 @@ private:
     void afterPayload() override;
     constexpr static const double resolution = 2500.0 / 4096;
 
-    CAEN_DGTZ_X743_EVENT_t* decodedEvents[SHOT_COUNT];
+
     CAEN_DGTZ_X743_GROUP_t* group;
+
+    size_t current_index = 0;
+
 
     constexpr const static std::pair<size_t, size_t> zeroInd[16] = {
             {100, 200},
@@ -64,20 +71,20 @@ private:
             {520, 670},
             {520, 670}
     };
+    std::array<std::latch*, SHOT_COUNT>& processed;
 
 public:
     bool arm();
     bool disarm();
-    explicit Processor(Config& config);
+    explicit Processor(Config& config, std::array<std::latch*, SHOT_COUNT>& processed);
     ~Processor() override;
 
+    CAEN_DGTZ_X743_EVENT_t* decodedEvents[SHOT_COUNT];
     std::array<std::array<std::array<double, PAGE_LENGTH>, CH_COUNT>, SHOT_COUNT> result;
     std::array<std::array<double, CH_COUNT>, SHOT_COUNT> zero;
     std::array<std::array<double, CH_COUNT>, SHOT_COUNT> ph_el;
     std::array<double, SHOT_COUNT> times;
-    char encodedEvents[EVT_SIZE][SHOT_COUNT];
-    std::atomic_int written;
-    std::atomic_int processed;
+    std::counting_semaphore<SHOT_COUNT> *written;
     int handle;
 };
 

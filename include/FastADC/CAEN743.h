@@ -34,8 +34,6 @@ private:
     char* buffer;
     uint32_t bufferSize;
 
-    std::vector<char*> events;
-
     CAEN_DGTZ_BoardInfo_t boardInfo;
 
     bool payload() override;
@@ -49,7 +47,6 @@ private:
 
     Processor* processor = nullptr;
     char* eventEncoded = nullptr;
-    Json results = Json::array();
     int currentEvent = 0;
 
 public:
@@ -60,7 +57,6 @@ public:
     int init(Config& config);
     bool arm();
     bool disarm();
-    bool releaseMemory();
     [[nodiscard]] int getSerial() const{return boardInfo.SerialNumber;};
 };
 
