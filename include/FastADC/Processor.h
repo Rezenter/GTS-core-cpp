@@ -9,11 +9,9 @@
 #include "Stoppable.h"
 #include <array>
 #include "CAENDigitizer.h"
-#include <atomic>
 #include <semaphore>
 #include <chrono>
 #include <latch>
-#include <mutex>
 
 #define EVT_SIZE 34832
 #define SHOT_COUNT 101

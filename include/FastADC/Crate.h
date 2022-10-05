@@ -9,8 +9,6 @@
 #include "Processor.h"
 #include "Config.h"
 
-#define EVT_SIZE 34832
-
 union Buffer{
     unsigned short int val;
     char chars[2];
