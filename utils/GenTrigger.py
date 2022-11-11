@@ -14,3 +14,5 @@ class GEN:
 
 gen = GEN('192.168.10.106')
 gen.trigger()
+
+print('Code ok')

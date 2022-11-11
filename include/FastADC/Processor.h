@@ -18,6 +18,11 @@
 #define PAGE_LENGTH 1024
 #define CH_COUNT 16
 
+union Timestamp{
+    char bytes[8];
+    unsigned long long int integer;
+};
+
 class Processor : public Stoppable{
 private:
     Config& config;
@@ -26,9 +31,7 @@ private:
     void beforePayload() override;
     void afterPayload() override;
     constexpr static const double resolution = 2500.0 / 4096;
-
-
-    CAEN_DGTZ_X743_GROUP_t* group;
+    Timestamp timestampConverter;
 
     size_t current_index = 0;
 
@@ -77,13 +80,14 @@ public:
     explicit Processor(Config& config, std::array<std::latch*, SHOT_COUNT>& processed);
     ~Processor() override;
 
-    CAEN_DGTZ_X743_EVENT_t* decodedEvents[SHOT_COUNT];
     std::array<std::array<std::array<double, PAGE_LENGTH>, CH_COUNT>, SHOT_COUNT> result;
     std::array<std::array<double, CH_COUNT>, SHOT_COUNT> zero;
     std::array<std::array<double, CH_COUNT>, SHOT_COUNT> ph_el;
     std::array<double, SHOT_COUNT> times;
     std::counting_semaphore<SHOT_COUNT> *written;
     int handle;
+    std::array<char*, SHOT_COUNT> readoutBuffer;
+    std::array<uint32_t, SHOT_COUNT> readoutBufferSize;
 };
 
 #endif //GTS_CORE_PROCESSOR_H

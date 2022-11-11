@@ -54,12 +54,17 @@ int CAEN743::init(Config& config){
     }
 
     uint32_t size;
-    ret = CAEN_DGTZ_MallocReadoutBuffer(handle, &buffer, &size);
     if(ret != CAEN_DGTZ_Success){
         std::cout << "ADC " << (int)address << " allocation error " << ret << std::endl;
         return 6;
     }
-    bufferSize = 0;
+    for(size_t event_ind = 0; event_ind < SHOT_COUNT; event_ind++){
+        ret = CAEN_DGTZ_MallocReadoutBuffer(handle, &processor->readoutBuffer[event_ind], &size);
+        if(ret != CAEN_DGTZ_Success){
+            std::cout << "ADC " << (int)address << " allocation error " << ret << std::endl;
+            return 6;
+        }
+    }
 
     if(ret == CAEN_DGTZ_Success) {
         initialized = true;
@@ -80,7 +85,9 @@ CAEN743::~CAEN743() {
     }
     //std::cout << "caen destructor...";
     if(initialized){
-        CAEN_DGTZ_FreeReadoutBuffer(&buffer); // some shit
+        for(size_t event_ind = 0; event_ind < SHOT_COUNT; event_ind++){
+            CAEN_DGTZ_FreeReadoutBuffer(&processor->readoutBuffer[event_ind]);
+        }
     }
 
     if(handle){
@@ -106,22 +113,14 @@ bool CAEN743::disarm() {
 }
 
 bool CAEN743::payload() {
-    CAEN_DGTZ_ReadData(handle,CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT, buffer, &bufferSize);
-    ret = CAEN_DGTZ_GetNumEvents(handle, buffer, bufferSize, &numEvents);
+    CAEN_DGTZ_ReadData(handle,CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT, processor->readoutBuffer[currentEvent], &processor->readoutBufferSize[currentEvent]);
+    numEvents = floor(static_cast<double>(processor->readoutBufferSize[currentEvent]) / 34832);
     if(numEvents != 0){
-        //CAEN_DGTZ_SendSWtrigger(handle);
-        //!!!WARNING!!! debug only
-
-        for(counter = 0; counter < numEvents; counter++){
-            CAEN_DGTZ_GetEventInfo(handle, buffer, bufferSize, counter, &eventInfo, &eventEncoded);
-            //memcpy(&processor->encodedEvents[currentEvent], eventEncoded, EVT_SIZE);
-            CAEN_DGTZ_DecodeEvent(handle, eventEncoded, (void**)(&processor->decodedEvents[currentEvent]));
-            processor->written->release();
-            currentEvent++;
-            if(currentEvent == SHOT_COUNT){
-                //std::cout << "CAEN 101" << std::endl;
-                return true;
-            }
+        processor->written->release();
+        currentEvent+=numEvents;
+        if(currentEvent >= SHOT_COUNT){
+            std::cout << "CAEN 101+" << std::endl;
+            return true;
         }
     }
     return false;
@@ -133,13 +132,9 @@ void CAEN743::afterPayload() {
         std::cout << "failed to stop ADC = " << ret << std::endl;
     }
     ret = CAEN_DGTZ_ClearData(handle);
-    //std::cout << "stopped adc " << (int)address << std::endl << std::flush;
-    //process();
-    //std::cout << "after payload finished" << std::endl;
 }
 
 void CAEN743::beforePayload() {
     currentEvent = 0;
-    //ret = CAEN_DGTZ_ClearData(handle);
 }
 

@@ -31,9 +31,6 @@ private:
     CAEN_DGTZ_ErrorCode ret;
     int	handle;
 
-    char* buffer;
-    uint32_t bufferSize;
-
     CAEN_DGTZ_BoardInfo_t boardInfo;
 
     bool payload() override;
@@ -42,11 +39,8 @@ private:
 
     bool initialized = false;
     uint32_t numEvents;
-    uint32_t counter = 0;
-    CAEN_DGTZ_EventInfo_t eventInfo;
 
     Processor* processor = nullptr;
-    char* eventEncoded = nullptr;
     int currentEvent = 0;
 
 public:
