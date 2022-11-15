@@ -32,6 +32,7 @@ private:
     void afterPayload() override;
     constexpr static const double resolution = 2500.0 / 4096;
     Timestamp timestampConverter;
+    unsigned int short currentCell = 0;
 
     size_t current_index = 0;
 
@@ -80,9 +81,9 @@ public:
     explicit Processor(Config& config, std::array<std::latch*, SHOT_COUNT>& processed);
     ~Processor() override;
 
-    std::array<std::array<std::array<double, PAGE_LENGTH>, CH_COUNT>, SHOT_COUNT> result;
-    std::array<std::array<double, CH_COUNT>, SHOT_COUNT> zero;
-    std::array<std::array<double, CH_COUNT>, SHOT_COUNT> ph_el;
+    std::array<std::array<std::array<unsigned short, PAGE_LENGTH>, CH_COUNT>, SHOT_COUNT> result;
+    std::array<std::array<unsigned int, CH_COUNT>, SHOT_COUNT> zero;
+    std::array<std::array<unsigned int, CH_COUNT>, SHOT_COUNT> ph_el;
     std::array<double, SHOT_COUNT> times;
     std::counting_semaphore<SHOT_COUNT> *written;
     int handle;

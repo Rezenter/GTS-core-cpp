@@ -13,24 +13,6 @@ Processor::~Processor(){
     associatedThread.join();
 }
 
-
-struct HexCharStruct
-{
-    unsigned char c;
-    HexCharStruct(unsigned char _c) : c(_c) { }
-};
-
-inline std::ostream& operator<<(std::ostream& o, const HexCharStruct& hs)
-{
-    return (o << std::hex << (int)hs.c);
-}
-
-inline HexCharStruct hex(unsigned char _c)
-{
-    return HexCharStruct(_c);
-}
-
-
 bool Processor::payload() {
     if(written->try_acquire_for(std::chrono::microseconds(100))){
         int pack_size = floor(static_cast<double>(readoutBufferSize[current_index]) / 34832);
@@ -52,45 +34,38 @@ bool Processor::payload() {
                 for(unsigned short sector = 0; sector < 64; sector++){ // 64 sectors per 1024 cell page
                     group_pointer += 4; // skip trash line, not mentioned in datasheet
                     for (unsigned int cell = 0; cell < 16; cell++) {
-                        //use integers!!!
-                        result[current_index][ch1][sector * 16 + cell] = *reinterpret_cast<unsigned short int*>((group_pointer + 4 * cell)) & 0x0FFF;
+                        currentCell = sector * 16 + cell;
+                        result[current_index][ch1][currentCell] = *reinterpret_cast<unsigned short*>((group_pointer + 4 * cell)) & 0x0FFF;
 
                         //what disarms processor before button???
 
-
-
-                        //result[current_index][ch1][cell] = config.offset + val * resolution;
-                        /*
-                        if (zeroInd[ch1].first < cell && cell <= zeroInd[ch1].second) {
-                            zero[current_index][ch1] += result[current_index][ch1][cell];
-                        } else if (signalInd[ch1].first < cell && cell <= signalInd[ch1].second) {
-                            ph_el[current_index][ch1] += result[current_index][ch1][cell];
+                        if (zeroInd[ch1].first < currentCell && currentCell <= zeroInd[ch1].second) {
+                            zero[current_index][ch1] += result[current_index][ch1][currentCell];
+                        } else if (signalInd[ch1].first < currentCell && currentCell <= signalInd[ch1].second) {
+                            ph_el[current_index][ch1] += result[current_index][ch1][currentCell];
                         }
-                        */
 
-                        //use integers!!!
-                        result[current_index][ch2][sector * 16 + cell] = *reinterpret_cast<unsigned short int*>((group_pointer + 4 * cell + 1)) >> 4;
-                        //result[current_index][ch2][cell] = config.offset + val * resolution;
-                        /*
-                        if (zeroInd[ch2].first < cell && cell <= zeroInd[ch2].second) {
-                            zero[current_index][ch2] += result[current_index][ch2][cell];
-                        } else if (signalInd[ch2].first < cell && cell <= signalInd[ch2].second) {
-                            ph_el[current_index][ch2] += result[current_index][ch2][cell];
+
+                        result[current_index][ch2][sector * 16 + cell] = *reinterpret_cast<unsigned short*>((group_pointer + 4 * cell + 1)) >> 4;
+
+                        if (zeroInd[ch2].first < currentCell && currentCell <= zeroInd[ch2].second) {
+                            zero[current_index][ch2] += result[current_index][ch2][currentCell];
+                        } else if (signalInd[ch2].first < currentCell && currentCell <= signalInd[ch2].second) {
+                            ph_el[current_index][ch2] += result[current_index][ch2][currentCell];
                         }
-                         */
                     }
                     group_pointer += 4 * 16;
                 }
-                zero[current_index][ch1] *= 1 / (double) (zeroInd[ch1].second - zeroInd[ch1].first);
-                zero[current_index][ch2] *= 1 / (double) (zeroInd[ch2].second - zeroInd[ch2].first);
+                zero[current_index][ch1] /= zeroInd[ch1].second - zeroInd[ch1].first;
+                zero[current_index][ch2] /= zeroInd[ch2].second - zeroInd[ch2].first;
 
                 ph_el[current_index][ch1] -=
-                        zero[current_index][ch1] * (double) (signalInd[ch1].second - signalInd[ch1].first);
+                        zero[current_index][ch1] * (signalInd[ch1].second - signalInd[ch1].first);
                 ph_el[current_index][ch2] -=
-                        zero[current_index][ch2] * (double) (signalInd[ch2].second - signalInd[ch2].first);
+                        zero[current_index][ch2] * (signalInd[ch2].second - signalInd[ch2].first);
 
-                ph_el[current_index][ch1] *= 0.78125; // 0.3125e-9 * 1e-3 / (1e2 * 1.6e-19 * 1e4 * 2.5 * 2) * 2
-                ph_el[current_index][ch2] *= 0.78125;
+                //ph_el[current_index][ch1] *= 0.78125; // 0.3125e-9 * 1e-3 / (1e2 * 1.6e-19 * 1e4 * 2.5 * 2) * 2
+                //ph_el[current_index][ch2] *= 0.78125;
             }
 
             processed[current_index]->count_down();

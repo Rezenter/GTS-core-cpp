@@ -117,8 +117,7 @@ bool Crate::payload() {
         for(size_t ch = 0; ch < 5; ch++){
             ph_el += processors[1]->ph_el[currentEvent][ch + 11];
         }
-
-        //ph_el = currentEvent * 40.0 * 17;
+        ph_el = (currentEvent + 1) * 40.0 * 60;
 
         ph_el = fmax(0.0, ph_el) * 0.0585;
         ph_el = fmin(4095, ph_el);
@@ -147,7 +146,7 @@ void Crate::beforePayload() {
     // Filling server information
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(8080);
-    servaddr.sin_addr.s_addr = inet_addr("192.168.10.49");
+    servaddr.sin_addr.s_addr = inet_addr("192.168.10.56");
     currentEvent = 0;
 
     buffer.val = 0;
