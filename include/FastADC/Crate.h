@@ -5,7 +5,7 @@
 #ifndef CAEN743_CRATE_H
 #define CAEN743_CRATE_H
 
-#include "CAEN743.h"
+#include "Link.h"
 #include "Processor.h"
 #include "Config.h"
 
@@ -18,7 +18,7 @@ class Crate : public Stoppable{
 private:
     Buffer buffer;
     Config& config;
-    CAEN743* caens[MAX_CAENS];
+    Link* links[MAX_LINKS];
     Processor* processors[MAX_CAENS];
 
     bool payload() override;

@@ -32,7 +32,7 @@ namespace http::server {
 
             do_await_stop();
 
-            // Open the acceptor with the option to reuse the address (i.e. SO_REUSEADDR).
+            // Open the acceptor with the option to reuse the link (i.e. SO_REUSEADDR).
             boost::asio::ip::tcp::resolver resolver(io_context_);
             boost::asio::ip::tcp::endpoint endpoint =
                     *resolver.resolve(address, port).begin();

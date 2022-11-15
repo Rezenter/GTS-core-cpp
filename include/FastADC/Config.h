@@ -6,6 +6,7 @@
 #define CAEN743_CONFIG_H
 
 #define MAX_CAENS 8
+#define MAX_LINKS 4
 
 #include <string>
 #include "CAENDigitizerType.h"
@@ -22,6 +23,7 @@ public:
     [[nodiscard]] std::string freqStr() const;
     //crate
     unsigned int caenCount = 8;
+    unsigned int linkCount = 4;
     unsigned int links[MAX_CAENS];
     unsigned int nodes[MAX_CAENS];
 

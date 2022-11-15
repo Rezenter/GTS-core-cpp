@@ -15,20 +15,23 @@ Crate::Crate(Config &config) : config(config) {
 
 Crate::~Crate(){
     disarm();
-    for(unsigned int count = 0; count < config.caenCount; count++){
-        delete caens[count];
+    for(unsigned int count = 0; count < config.linkCount; count++){
+        delete links[count];
         delete processors[count];
+        delete processors[count * 2];
     }
 }
 
 bool Crate::init() {
     armed = false;
-    for(unsigned int count = 0; count < config.caenCount; count++){
-        processors[count] = new Processor(this->config, this->processed);
-        caens[count] = new CAEN743(config.links[count], config.nodes[count], processors[count]);
-        caens[count]->init(config);
-        if(!caens[count]->isAlive()){
-            std::cout << "board " << count << " not initialised!" << std::endl;
+    for(unsigned int link = 0; link < config.linkCount; link++){
+        std::cout << link << std::endl;
+        processors[link] = new Processor(this->config, this->processed);
+        processors[4 + link] = new Processor(this->config, this->processed);
+        links[link] = new Link(config.links[link], processors[link], processors[4 + link]);
+        links[link]->init(config);
+        if(!links[link]->isAlive()){
+            std::cout << "board " << link << " not initialised!" << std::endl;
             return false;
         }
     }
@@ -40,9 +43,10 @@ bool Crate::arm() {
         return false;
     }
     armed = true;
-    for(unsigned int count = 0; count < config.caenCount; count++){
+    for(unsigned int count = 0; count < config.linkCount; count++){
         processors[count]->arm();
-        if(!caens[count]->arm()) {
+        processors[4 + count]->arm();
+        if(!links[count]->arm()) {
             return false;
         }
     }
@@ -79,21 +83,24 @@ Json Crate::disarm() {
             },
             {"boards", Json::array()}
     };
-    for(unsigned int count = 0; count < config.caenCount; count++){
-        caens[count]->disarm();
-        processors[count]->disarm();
-        Json board = Json::array();
-        for(size_t event_ind = 0; event_ind < SHOT_COUNT; event_ind++){
-            board.push_back({
-                                    {"ch", processors[count]->result[event_ind]},
-                                    {"ph_el", processors[count]->ph_el[event_ind]},
-                                    {"t", processors[count]->times[event_ind]},
-                                    {"DAC1", DAC1[event_ind]}
+    for(unsigned int link = 0; link < config.linkCount; link++){
+        links[link]->disarm();
+        links[link]->processors[0]->disarm();
+        links[link]->processors[1]->disarm();
+    }
+    for(size_t board = 0; board < config.caenCount; board++){
+        Json boardData = Json::array();
+        for (size_t event_ind = 0; event_ind < SHOT_COUNT; event_ind++) {
+            boardData.push_back({
+                                    {"ch",    processors[board]->result[event_ind]},
+                                    {"ph_el", processors[board]->ph_el[event_ind]},
+                                    {"t",     processors[board]->times[event_ind]},
+                                    {"DAC1",  DAC1[event_ind]}
                             });
         }
 
-        result["boards"].push_back(board);
-        result["header"]["boards"].push_back(caens[count]->getSerial());
+        result["boards"].push_back(boardData);
+        result["header"]["boards"].push_back(links[board % 4]->serials[board / 4]);
     }
     this->requestStop();
     std::cout << "all joined" << std::endl;
@@ -102,8 +109,8 @@ Json Crate::disarm() {
 }
 
 bool Crate::isAlive() {
-    for(unsigned int count = 0; count < config.caenCount; count++){
-        if(!caens[count]->isAlive()){
+    for(unsigned int count = 0; count < config.linkCount; count++){
+        if(!links[count]->isAlive()){
             std::cout << "board " << count << " dead!" << std::endl;
             return false;
         }
