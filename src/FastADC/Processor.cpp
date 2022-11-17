@@ -45,7 +45,6 @@ bool Processor::payload() {
                             ph_el[current_index][ch1] += result[current_index][ch1][currentCell];
                         }
 
-
                         result[current_index][ch2][sector * 16 + cell] = *reinterpret_cast<unsigned short*>((group_pointer + 4 * cell + 1)) >> 4;
 
                         if (zeroInd[ch2].first < currentCell && currentCell <= zeroInd[ch2].second) {
@@ -69,7 +68,6 @@ bool Processor::payload() {
             }
 
             processed[current_index]->count_down();
-            tProcessed[current_index] = std::chrono::steady_clock::now();
             current_index++;
             if(current_index >= SHOT_COUNT){
                 //std::cout << "processed 101" << std::endl;

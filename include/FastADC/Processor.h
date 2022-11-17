@@ -86,7 +86,6 @@ public:
     std::array<std::array<unsigned int, CH_COUNT>, SHOT_COUNT> ph_el;
     std::array<double, SHOT_COUNT> times;
     std::counting_semaphore<SHOT_COUNT> *written;
-    std::array<std::chrono::time_point<std::chrono::steady_clock>, SHOT_COUNT> tProcessed;
 
     int handle;
     std::array<char*, SHOT_COUNT> readoutBuffer;

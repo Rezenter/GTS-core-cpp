@@ -6,7 +6,7 @@
 #define CAEN743_CRATE_H
 
 #include "Link.h"
-#include "Processor.h"
+
 #include "Config.h"
 
 union Buffer{
@@ -19,7 +19,6 @@ private:
     Buffer buffer;
     Config& config;
     Link* links[MAX_LINKS];
-    Processor* processors[MAX_CAENS];
 
     bool payload() override;
     void beforePayload() override;
@@ -31,9 +30,6 @@ private:
     bool armed = false;
     std::array<unsigned short , SHOT_COUNT> DAC1;
     std::array<std::latch*, SHOT_COUNT> processed;
-    std::array<std::chrono::time_point<std::chrono::steady_clock>, SHOT_COUNT> tProcessedAll;
-    std::array<std::chrono::time_point<std::chrono::steady_clock>, SHOT_COUNT> tDACSend;
-    std::chrono::time_point<std::chrono::steady_clock> tArm;
 
 public:
     ~Crate() override;

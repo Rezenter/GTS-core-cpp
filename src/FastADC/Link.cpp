@@ -11,10 +11,10 @@
 int Link::init(Config& config){
     this->config = &config;
 
+    std::cout << link << ' ' << (int)(1 << (link + 1)) << ' ' << SetThreadAffinityMask(GetCurrentThread(), 1 << (link + 3)) << std::endl; //WINDOWS!!!
+
     for(int node = 0; node < 2; node++) {
-        //ret = CAEN_DGTZ_OpenDigitizer(CAEN_DGTZ_OpticalLink, link, chain_node, 0, &handle);
         ret = CAEN_DGTZ_OpenDigitizer2(CAEN_DGTZ_OpticalLink, reinterpret_cast<void *>(&link), node, 0, &handles[node]);
-        processors[node]->handle = handles[node];
         if (ret != CAEN_DGTZ_Success) {
             printf("Can't open digitizer (%d, %d)\n", link, node);
             return 1;
@@ -56,13 +56,13 @@ int Link::init(Config& config){
         }
 
         uint32_t size;
-        for (size_t event_ind = 0; event_ind < SHOT_COUNT; event_ind++) {
-            ret = CAEN_DGTZ_MallocReadoutBuffer(handles[node], &processors[node]->readoutBuffer[event_ind], &size);
-            if (ret != CAEN_DGTZ_Success) {
-                std::cout << "ADC " << link << " allocation error " << ret << std::endl;
-                return 6;
-            }
+
+        ret = CAEN_DGTZ_MallocReadoutBuffer(handles[node], &readoutBuffer, &size);
+        if (ret != CAEN_DGTZ_Success) {
+            std::cout << "ADC " << link << " allocation error " << ret << std::endl;
+            return 6;
         }
+
     }
     if(ret == CAEN_DGTZ_Success) {
         initialized = true;
@@ -88,9 +88,7 @@ Link::~Link() {
     //std::cout << "caen destructor...";
     if(initialized){
         for(int node = 0; node < 2; node++) {
-            for (size_t event_ind = 0; event_ind < SHOT_COUNT; event_ind++) {
-                CAEN_DGTZ_FreeReadoutBuffer(&processors[node]->readoutBuffer[event_ind]);
-            }
+            CAEN_DGTZ_FreeReadoutBuffer(&readoutBuffer);
             CAEN_DGTZ_CloseDigitizer(handles[node]);
         }
     }
@@ -99,6 +97,19 @@ Link::~Link() {
 }
 
 bool Link::arm() {
+    for(size_t evenInd = 0; evenInd < SHOT_COUNT; evenInd++){
+        times[evenInd] = 0.0;
+        for(size_t node = 0; node < 2; node++){
+            for(size_t ch_ind = 0; ch_ind < CH_COUNT; ch_ind++){
+                zero[node][evenInd][ch_ind] = 0.0;
+                ph_el[node][evenInd][ch_ind] = 0.0;
+                for(size_t cell_ind = 0; cell_ind < PAGE_LENGTH; cell_ind++){
+                    result[node][evenInd][ch_ind][cell_ind] = 0.0;
+
+                }
+            }
+        }
+    }
     for(int node = 0; node < 2; node++) {
         CAEN_DGTZ_ClearData(handles[node]);
         CAEN_DGTZ_SWStartAcquisition(handles[node]);
@@ -117,21 +128,104 @@ bool Link::disarm() {
 }
 
 bool Link::payload() {
-    CAEN_DGTZ_ReadData(handles[0],CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT, processors[0]->readoutBuffer[currentEvent[0]], &processors[0]->readoutBufferSize[currentEvent[0]]);
-    numEvents = floor(static_cast<double>(processors[0]->readoutBufferSize[currentEvent[0]]) / 34832);
-    if(numEvents != 0){
-        tReadoutStart[0][currentEvent[0]] = std::chrono::steady_clock::now();
-        processors[0]->written->release();
-        currentEvent[0]+=numEvents;
-        tReadoutDone[0][currentEvent[0]] = std::chrono::steady_clock::now();
+    CAEN_DGTZ_ReadData(handles[0],CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT, readoutBuffer, &readoutBufferSize);
+    if(static_cast<double>(readoutBufferSize) == EVT_SIZE){
+        char* group_pointer = readoutBuffer + 16;
+        timestampConverter.integer = 0;
+        timestampConverter.bytes[0] = *(group_pointer + 4 * 14 + 3);
+        timestampConverter.bytes[1] = *(group_pointer + 4 * 15 + 3);
+        timestampConverter.bytes[2] = *(group_pointer + 4 * 16 + 3);
+        timestampConverter.bytes[3] = *(group_pointer + 4 * 17 + 3);
+        timestampConverter.bytes[4] = *(group_pointer + 4 * 18 + 3);
+        times[currentEvent] = 5e-6 * timestampConverter.integer;
 
-        tReadoutStart[1][currentEvent[1]] = std::chrono::steady_clock::now();
-        CAEN_DGTZ_ReadData(handles[1],CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT, processors[1]->readoutBuffer[currentEvent[1]], &processors[1]->readoutBufferSize[currentEvent[1]]);
-        currentEvent[1]+= floor(static_cast<double>(processors[1]->readoutBufferSize[currentEvent[1]]) / 34832);
-        processors[1]->written->release();
-        tReadoutDone[1][currentEvent[1]] = std::chrono::steady_clock::now();
+        for (int groupIdx = 0; groupIdx < MAX_V1743_GROUP_SIZE; groupIdx++) {
+            size_t ch1 = 2 * groupIdx;
+            size_t ch2 = ch1 + 1;
 
-        if(currentEvent[0] >= SHOT_COUNT){
+            for (unsigned short sector = 0; sector < 64; sector++) { // 64 sectors per 1024 cell page
+                group_pointer += 4; // skip trash line, not mentioned in datasheet
+                for (unsigned int cell = 0; cell < 16; cell++) {
+                    currentCell = sector * 16 + cell;
+                    result[0][currentEvent][ch1][currentCell] =
+                            *reinterpret_cast<unsigned short *>((group_pointer + 4 * cell)) & 0x0FFF;
+
+                    if (zeroInd[ch1].first < currentCell && currentCell <= zeroInd[ch1].second) {
+                        zero[0][currentEvent][ch1] += result[0][currentEvent][ch1][currentCell];
+                    } else if (signalInd[ch1].first < currentCell && currentCell <= signalInd[ch1].second) {
+                        ph_el[0][currentEvent][ch1] += result[0][currentEvent][ch1][currentCell];
+                    }
+
+
+                    result[0][currentEvent][ch2][sector * 16 + cell] =
+                            *reinterpret_cast<unsigned short *>((group_pointer + 4 * cell + 1)) >> 4;
+                    if (zeroInd[ch2].first < currentCell && currentCell <= zeroInd[ch2].second) {
+                        zero[0][currentEvent][ch2] += result[0][currentEvent][ch2][currentCell];
+                    } else if (signalInd[ch2].first < currentCell && currentCell <= signalInd[ch2].second) {
+                        ph_el[0][currentEvent][ch2] += result[0][currentEvent][ch2][currentCell];
+                    }
+                }
+                group_pointer += 4 * 16;
+            }
+            zero[0][currentEvent][ch1] /= zeroInd[ch1].second - zeroInd[ch1].first;
+            zero[0][currentEvent][ch2] /= zeroInd[ch2].second - zeroInd[ch2].first;
+
+            ph_el[0][currentEvent][ch1] -=
+                    zero[0][currentEvent][ch1] * (signalInd[ch1].second - signalInd[ch1].first);
+            ph_el[0][currentEvent][ch2] -=
+                    zero[0][currentEvent][ch2] * (signalInd[ch2].second - signalInd[ch2].first);
+
+            //ph_el[currentEvent][ch1] *= 0.78125; // 0.3125e-9 * 1e-3 / (1e2 * 1.6e-19 * 1e4 * 2.5 * 2) * 2
+            //ph_el[currentEvent][ch2] *= 0.78125;
+        }
+
+
+
+        CAEN_DGTZ_ReadData(handles[1],CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT, readoutBuffer, &readoutBufferSize);
+        group_pointer = readoutBuffer + 16;
+
+        for (int groupIdx = 0; groupIdx < MAX_V1743_GROUP_SIZE; groupIdx++) {
+            size_t ch1 = 2 * groupIdx;
+            size_t ch2 = ch1 + 1;
+            for (unsigned short sector = 0; sector < 64; sector++) { // 64 sectors per 1024 cell page
+                group_pointer += 4; // skip trash line, not mentioned in datasheet
+                for (unsigned int cell = 0; cell < 16; cell++) {
+                    currentCell = sector * 16 + cell;
+                    result[1][currentEvent][ch1][currentCell] =
+                            *reinterpret_cast<unsigned short *>((group_pointer + 4 * cell)) & 0x0FFF;
+
+                    if (zeroInd[ch1].first < currentCell && currentCell <= zeroInd[ch1].second) {
+                        zero[1][currentEvent][ch1] += result[1][currentEvent][ch1][currentCell];
+                    } else if (signalInd[ch1].first < currentCell && currentCell <= signalInd[ch1].second) {
+                        ph_el[1][currentEvent][ch1] += result[1][currentEvent][ch1][currentCell];
+                    }
+
+
+                    result[1][currentEvent][ch2][sector * 16 + cell] =
+                            *reinterpret_cast<unsigned short *>((group_pointer + 4 * cell + 1)) >> 4;
+                    if (zeroInd[ch2].first < currentCell && currentCell <= zeroInd[ch2].second) {
+                        zero[1][currentEvent][ch2] += result[1][currentEvent][ch2][currentCell];
+                    } else if (signalInd[ch2].first < currentCell && currentCell <= signalInd[ch2].second) {
+                        ph_el[1][currentEvent][ch2] += result[1][currentEvent][ch2][currentCell];
+                    }
+                }
+                group_pointer += 4 * 16;
+            }
+            zero[1][currentEvent][ch1] /= zeroInd[ch1].second - zeroInd[ch1].first;
+            zero[1][currentEvent][ch2] /= zeroInd[ch2].second - zeroInd[ch2].first;
+
+            ph_el[1][currentEvent][ch1] -=
+                    zero[1][currentEvent][ch1] * (signalInd[ch1].second - signalInd[ch1].first);
+            ph_el[1][currentEvent][ch2] -=
+                    zero[1][currentEvent][ch2] * (signalInd[ch2].second - signalInd[ch2].first);
+
+            //ph_el[currentEvent][ch1] *= 0.78125; // 0.3125e-9 * 1e-3 / (1e2 * 1.6e-19 * 1e4 * 2.5 * 2) * 2
+            //ph_el[currentEvent][ch2] *= 0.78125;
+        }
+
+        processed[currentEvent]->count_down();
+        currentEvent++;
+        if(currentEvent >= SHOT_COUNT){
             std::cout << "CAEN 101+" << std::endl;
             return true;
         }
@@ -150,7 +244,6 @@ void Link::afterPayload() {
 }
 
 void Link::beforePayload() {
-    currentEvent[0] = 0;
-    currentEvent[1] = 0;
+    currentEvent = 0;
 }
 
