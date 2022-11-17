@@ -44,6 +44,9 @@ public:
     bool disarm();
     int serials[2] = {0, 0};
     Processor* processors[2];
+
+    std::array<std::chrono::time_point<std::chrono::steady_clock>, SHOT_COUNT> tReadoutStart [2];
+    std::array<std::chrono::time_point<std::chrono::steady_clock>, SHOT_COUNT> tReadoutDone [2];
 };
 
 #endif //LINK_H

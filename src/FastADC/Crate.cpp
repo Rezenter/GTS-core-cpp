@@ -27,8 +27,8 @@ bool Crate::init() {
     for(unsigned int link = 0; link < config.linkCount; link++){
         std::cout << link << std::endl;
         processors[link] = new Processor(this->config, this->processed);
-        processors[4 + link] = new Processor(this->config, this->processed);
-        links[link] = new Link(config.links[link], processors[link], processors[4 + link]);
+        processors[config.linkCount + link] = new Processor(this->config, this->processed);
+        links[link] = new Link(config.links[link], processors[link], processors[config.linkCount + link]);
         links[link]->init(config);
         if(!links[link]->isAlive()){
             std::cout << "board " << link << " not initialised!" << std::endl;
@@ -45,7 +45,7 @@ bool Crate::arm() {
     armed = true;
     for(unsigned int count = 0; count < config.linkCount; count++){
         processors[count]->arm();
-        processors[4 + count]->arm();
+        processors[config.linkCount + count]->arm();
         if(!links[count]->arm()) {
             return false;
         }
@@ -55,7 +55,8 @@ bool Crate::arm() {
         run();
     });
     for(size_t evenInd = 0; evenInd < SHOT_COUNT; evenInd++) {
-        processed[evenInd] = new std::latch(config.caenCount);
+        //processed[evenInd] = new std::latch(config.caenCount);
+        processed[evenInd] = new std::latch(config.linkCount * 2);
     }
     std::cout << "armed" << std::endl;
     std::cout << "\n\n\nWARNING!!! not normalised on Elas!!!" << std::endl;
@@ -83,24 +84,42 @@ Json Crate::disarm() {
             },
             {"boards", Json::array()}
     };
+    tArm = links[0]->tReadoutStart[0][0];
     for(unsigned int link = 0; link < config.linkCount; link++){
         links[link]->disarm();
         links[link]->processors[0]->disarm();
         links[link]->processors[1]->disarm();
+
+        if(links[link]->tReadoutStart[0][0] < tArm){
+            tArm = links[link]->tReadoutStart[0][0];
+        }
+        if(links[link]->tReadoutStart[1][0] < tArm){
+            tArm = links[link]->tReadoutStart[1][0];
+        }
     }
-    for(size_t board = 0; board < config.caenCount; board++){
+    std::cout << "alive" << std::endl;
+    for(size_t board = 0; board < config.linkCount * 2; board++){
         Json boardData = Json::array();
         for (size_t event_ind = 0; event_ind < SHOT_COUNT; event_ind++) {
+            if(board == 0){
+                std::cout << (unsigned long long)duration_cast<std::chrono::microseconds>(links[0]->tReadoutDone[0][event_ind] - links[0]->tReadoutDone[0][event_ind]).count() << ' ' << (unsigned long long)duration_cast<std::chrono::microseconds>(processors[0]->tProcessed[event_ind] - links[0]->tReadoutDone[0][event_ind]).count() << std::endl;
+            }
             boardData.push_back({
                                     {"ch",    processors[board]->result[event_ind]},
                                     {"ph_el", processors[board]->ph_el[event_ind]},
                                     {"t",     processors[board]->times[event_ind]},
-                                    {"DAC1",  DAC1[event_ind]}
-                            });
+                                    {"DAC1",  DAC1[event_ind]}//,
+                                    /*{"tReadoutStart", (unsigned long long)duration_cast<std::chrono::microseconds>(processors[board]->tReadoutStart[event_ind] - tArm).count()},
+                                    {"tReadout", (unsigned long long)duration_cast<std::chrono::microseconds>(processors[board]->tReadoutDone[event_ind] - processors[board]->tReadoutStart[event_ind]).count()},
+                                    {"tProcess", (unsigned long long)duration_cast<std::chrono::microseconds>(processors[board]->tProcessed[event_ind] - processors[board]->tReadoutStart[event_ind]).count()},
+                                    {"tProcessEnd", (unsigned long long)duration_cast<std::chrono::microseconds>(processors[board]->tProcessed[event_ind] - tArm).count()},
+                                    {"tBeforeAllProcessed", (unsigned long long)duration_cast<std::chrono::microseconds>(tProcessedAll[event_ind] - processors[board]->tProcessed[event_ind]).count()},
+                                    {"tBeforeDAC", (unsigned long long)duration_cast<std::chrono::microseconds>(tDACSend[event_ind] - processors[board]->tProcessed[event_ind]).count()}
+                            */});
         }
 
         result["boards"].push_back(boardData);
-        result["header"]["boards"].push_back(links[board % 4]->serials[board / 4]);
+        result["header"]["boards"].push_back(links[board % config.linkCount]->serials[board / config.linkCount]);
     }
     this->requestStop();
     std::cout << "all joined" << std::endl;
@@ -120,6 +139,7 @@ bool Crate::isAlive() {
 
 bool Crate::payload() {
     if(processed[currentEvent]->try_wait()){
+        tProcessedAll[currentEvent] = std::chrono::steady_clock::now();
         double ph_el = 0;
         for(size_t ch = 0; ch < 5; ch++){
             ph_el += processors[1]->ph_el[currentEvent][ch + 11];
@@ -134,6 +154,7 @@ bool Crate::payload() {
         sendto(sockfd, buffer.chars, 2,
                0, (const struct sockaddr *) &servaddr,
                sizeof(servaddr));
+        tDACSend[currentEvent] = std::chrono::steady_clock::now();
     }else{
         std::this_thread::sleep_for(std::chrono::microseconds(100));
         return false;

@@ -120,12 +120,16 @@ bool Link::payload() {
     CAEN_DGTZ_ReadData(handles[0],CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT, processors[0]->readoutBuffer[currentEvent[0]], &processors[0]->readoutBufferSize[currentEvent[0]]);
     numEvents = floor(static_cast<double>(processors[0]->readoutBufferSize[currentEvent[0]]) / 34832);
     if(numEvents != 0){
+        tReadoutStart[0][currentEvent[0]] = std::chrono::steady_clock::now();
         processors[0]->written->release();
         currentEvent[0]+=numEvents;
+        tReadoutDone[0][currentEvent[0]] = std::chrono::steady_clock::now();
 
+        tReadoutStart[1][currentEvent[1]] = std::chrono::steady_clock::now();
         CAEN_DGTZ_ReadData(handles[1],CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT, processors[1]->readoutBuffer[currentEvent[1]], &processors[1]->readoutBufferSize[currentEvent[1]]);
         currentEvent[1]+= floor(static_cast<double>(processors[1]->readoutBufferSize[currentEvent[1]]) / 34832);
         processors[1]->written->release();
+        tReadoutDone[1][currentEvent[1]] = std::chrono::steady_clock::now();
 
         if(currentEvent[0] >= SHOT_COUNT){
             std::cout << "CAEN 101+" << std::endl;

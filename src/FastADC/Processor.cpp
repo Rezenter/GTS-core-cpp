@@ -69,6 +69,7 @@ bool Processor::payload() {
             }
 
             processed[current_index]->count_down();
+            tProcessed[current_index] = std::chrono::steady_clock::now();
             current_index++;
             if(current_index >= SHOT_COUNT){
                 //std::cout << "processed 101" << std::endl;

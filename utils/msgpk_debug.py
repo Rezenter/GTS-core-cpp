@@ -6,12 +6,12 @@ path = 'd:/data/db/debug/raw/'
 group_count = 8
 _ch_count = 2
 
-shotn = 632
+shotn = 655
 
 shot_folder = '%s%05d' % (path, shotn)
 FILE_EXT = 'msgpk'
 
-with open('%s/%s.%s' % (shot_folder, '1', FILE_EXT), 'rb') as file:
+with open('%s/%s.%s' % (shot_folder, '0', FILE_EXT), 'rb') as file:
     data = msgpack.unpackb(file.read())
     #with open('tmp.json', 'w') as out_file:
     #    json.dump(data, out_file)
