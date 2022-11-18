@@ -19,6 +19,7 @@
 #define SHOT_COUNT 101
 #define PAGE_LENGTH 1024
 #define CH_COUNT 16
+#define RESOLUTION 0.6103516
 
 union Timestamp{
     char bytes[8];
@@ -95,7 +96,7 @@ public:
     std::array<std::array<std::array<unsigned short, PAGE_LENGTH>, CH_COUNT>, SHOT_COUNT> result[2];
     std::array<std::array<unsigned int, CH_COUNT>, SHOT_COUNT> zero [2];
     std::array<std::array<unsigned int, CH_COUNT>, SHOT_COUNT> ph_el [2];
-    std::array<double, SHOT_COUNT> times;
+    std::array<unsigned long long int, SHOT_COUNT> times;
     std::array<std::latch*, SHOT_COUNT>& processed;
 };
 

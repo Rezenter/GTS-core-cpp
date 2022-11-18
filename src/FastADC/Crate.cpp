@@ -84,24 +84,15 @@ Json Crate::disarm() {
     std::cout << "alive" << std::endl;
     for(size_t board = 0; board < config.linkCount * 2; board++){
         Json boardData = Json::array();
-        for (size_t event_ind = 0; event_ind < SHOT_COUNT; event_ind++) {
-            boardData.push_back({
-                                        {"ch",    0},
-                                        {"ph_el", 0},
-                                        {"t",     0},
-                                        {"DAC1",  DAC1[event_ind]}
-                                });
-        }
 
-        /*
         for (size_t event_ind = 0; event_ind < SHOT_COUNT; event_ind++) {
             boardData.push_back({
-                                    {"ch",    processors[board]->result[event_ind]},
-                                    {"ph_el", processors[board]->ph_el[event_ind]},
-                                    {"t",     processors[board]->times[event_ind]},
+                                    {"ch",    links[board % config.linkCount]->result[board / config.linkCount][event_ind]},
+                                    {"ph_el", links[board % config.linkCount]->ph_el[board / config.linkCount][event_ind]},
+                                    {"t",     (double)(links[board % config.linkCount]->times[event_ind] - links[board % config.linkCount]->times[0]) * 5e-6},
                                     {"DAC1",  DAC1[event_ind]}
             });
-        }*/
+        }
 
         result["boards"].push_back(boardData);
         result["header"]["boards"].push_back(links[board % config.linkCount]->serials[board / config.linkCount]);
@@ -127,11 +118,9 @@ bool Crate::payload() {
         preload = false;
         double ph_el = 0;
         for(size_t ch = 0; ch < 5; ch++){
-            //ph_el += processors[1]->ph_el[currentEvent][ch + 11];
             ph_el += links[0]->ph_el[1][currentEvent][ch + 11];
         }
-        ph_el = (currentEvent + 1) * 40.0 * 60;
-
+        //ph_el = (currentEvent + 1) * 40.0 * 60;
         ph_el = fmax(0.0, ph_el) * 0.0585;
         ph_el = fmin(4095, ph_el);
         buffer.val = floor(ph_el);
@@ -141,7 +130,7 @@ bool Crate::payload() {
                0, (const struct sockaddr *) &servaddr,
                sizeof(servaddr));
     }else{
-        if(0 && preload){
+        if(preload){
             buffer.val = 0;
             sendto(sockfd, buffer.chars, 2,
                    0, (const struct sockaddr *) &servaddr,

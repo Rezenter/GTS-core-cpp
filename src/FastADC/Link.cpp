@@ -135,7 +135,7 @@ bool Link::payload() {
         timestampConverter.bytes[2] = *(group_pointer + 4 * 16 + 3);
         timestampConverter.bytes[3] = *(group_pointer + 4 * 17 + 3);
         timestampConverter.bytes[4] = *(group_pointer + 4 * 18 + 3);
-        times[currentEvent] = 5e-6 * timestampConverter.integer;
+        times[currentEvent] = timestampConverter.integer;
 
         for (int groupIdx = 0; groupIdx < MAX_V1743_GROUP_SIZE; groupIdx++) {
             size_t ch1 = 2 * groupIdx;
@@ -147,7 +147,7 @@ bool Link::payload() {
                     currentCell = sector * 16 + cell;
                     result[0][currentEvent][ch1][currentCell] =
                             *reinterpret_cast<unsigned short *>((group_pointer + 4 * cell)) & 0x0FFF;
-
+                    result[0][currentEvent][ch1][currentCell] = (result[0][currentEvent][ch1][currentCell] & 0b011111111111) | (~result[0][currentEvent][ch1][currentCell] & 0b100000000000);
                     if (zeroInd[ch1].first < currentCell && currentCell <= zeroInd[ch1].second) {
                         zero[0][currentEvent][ch1] += result[0][currentEvent][ch1][currentCell];
                     } else if (signalInd[ch1].first < currentCell && currentCell <= signalInd[ch1].second) {
@@ -157,6 +157,7 @@ bool Link::payload() {
 
                     result[0][currentEvent][ch2][sector * 16 + cell] =
                             *reinterpret_cast<unsigned short *>((group_pointer + 4 * cell + 1)) >> 4;
+                    result[0][currentEvent][ch2][currentCell] = (result[0][currentEvent][ch2][currentCell] & 0b011111111111) | (~result[0][currentEvent][ch2][currentCell] & 0b100000000000);
                     if (zeroInd[ch2].first < currentCell && currentCell <= zeroInd[ch2].second) {
                         zero[0][currentEvent][ch2] += result[0][currentEvent][ch2][currentCell];
                     } else if (signalInd[ch2].first < currentCell && currentCell <= signalInd[ch2].second) {
@@ -165,16 +166,11 @@ bool Link::payload() {
                 }
                 group_pointer += 4 * 16;
             }
-            zero[0][currentEvent][ch1] /= zeroInd[ch1].second - zeroInd[ch1].first;
-            zero[0][currentEvent][ch2] /= zeroInd[ch2].second - zeroInd[ch2].first;
+            ph_el[0][currentEvent][ch1] = (ph_el[0][currentEvent][ch1] - zero[0][currentEvent][ch1]) * RESOLUTION / (signalInd[ch1].second - signalInd[ch1].first);
+            ph_el[0][currentEvent][ch2] = (ph_el[0][currentEvent][ch2] - zero[0][currentEvent][ch2]) * RESOLUTION / (signalInd[ch2].second - signalInd[ch2].first);
 
-            ph_el[0][currentEvent][ch1] -=
-                    zero[0][currentEvent][ch1] * (signalInd[ch1].second - signalInd[ch1].first);
-            ph_el[0][currentEvent][ch2] -=
-                    zero[0][currentEvent][ch2] * (signalInd[ch2].second - signalInd[ch2].first);
-
-            //ph_el[currentEvent][ch1] *= 0.78125; // 0.3125e-9 * 1e-3 / (1e2 * 1.6e-19 * 1e4 * 2.5 * 2) * 2
-            //ph_el[currentEvent][ch2] *= 0.78125;
+            zero[0][currentEvent][ch1] = config->offset - 1250 + RESOLUTION * zero[0][currentEvent][ch1] / (zeroInd[ch1].second - zeroInd[ch1].first);
+            zero[0][currentEvent][ch2] = config->offset - 1250 + RESOLUTION * zero[0][currentEvent][ch2] / (zeroInd[ch2].second - zeroInd[ch2].first);
         }
 
 
@@ -190,8 +186,8 @@ bool Link::payload() {
                 for (unsigned int cell = 0; cell < 16; cell++) {
                     currentCell = sector * 16 + cell;
                     result[1][currentEvent][ch1][currentCell] =
-                            *reinterpret_cast<unsigned short *>((group_pointer + 4 * cell)) & 0x0FFF;
-
+                            ((*reinterpret_cast<unsigned short *>(group_pointer + 4 * cell)) & 0x0FFF);
+                    result[1][currentEvent][ch1][currentCell] = (result[1][currentEvent][ch1][currentCell] & 0b011111111111) | (~result[1][currentEvent][ch1][currentCell] & 0b100000000000);
                     if (zeroInd[ch1].first < currentCell && currentCell <= zeroInd[ch1].second) {
                         zero[1][currentEvent][ch1] += result[1][currentEvent][ch1][currentCell];
                     } else if (signalInd[ch1].first < currentCell && currentCell <= signalInd[ch1].second) {
@@ -201,6 +197,7 @@ bool Link::payload() {
 
                     result[1][currentEvent][ch2][sector * 16 + cell] =
                             *reinterpret_cast<unsigned short *>((group_pointer + 4 * cell + 1)) >> 4;
+                    result[1][currentEvent][ch2][currentCell] = (result[1][currentEvent][ch2][currentCell] & 0b011111111111) | (~result[1][currentEvent][ch2][currentCell] & 0b100000000000);
                     if (zeroInd[ch2].first < currentCell && currentCell <= zeroInd[ch2].second) {
                         zero[1][currentEvent][ch2] += result[1][currentEvent][ch2][currentCell];
                     } else if (signalInd[ch2].first < currentCell && currentCell <= signalInd[ch2].second) {
@@ -209,16 +206,11 @@ bool Link::payload() {
                 }
                 group_pointer += 4 * 16;
             }
-            zero[1][currentEvent][ch1] /= zeroInd[ch1].second - zeroInd[ch1].first;
-            zero[1][currentEvent][ch2] /= zeroInd[ch2].second - zeroInd[ch2].first;
+            ph_el[1][currentEvent][ch1] = (ph_el[1][currentEvent][ch1] - zero[1][currentEvent][ch1]) * RESOLUTION / (signalInd[ch1].second - signalInd[ch1].first);
+            ph_el[1][currentEvent][ch2] = (ph_el[1][currentEvent][ch2] - zero[1][currentEvent][ch2]) * RESOLUTION / (signalInd[ch2].second - signalInd[ch2].first);
 
-            ph_el[1][currentEvent][ch1] -=
-                    zero[1][currentEvent][ch1] * (signalInd[ch1].second - signalInd[ch1].first);
-            ph_el[1][currentEvent][ch2] -=
-                    zero[1][currentEvent][ch2] * (signalInd[ch2].second - signalInd[ch2].first);
-
-            //ph_el[currentEvent][ch1] *= 0.78125; // 0.3125e-9 * 1e-3 / (1e2 * 1.6e-19 * 1e4 * 2.5 * 2) * 2
-            //ph_el[currentEvent][ch2] *= 0.78125;
+            zero[1][currentEvent][ch1] = config->offset - 1250 + RESOLUTION * zero[1][currentEvent][ch1] / (zeroInd[ch1].second - zeroInd[ch1].first);
+            zero[1][currentEvent][ch2] = config->offset - 1250 + RESOLUTION * zero[1][currentEvent][ch2] / (zeroInd[ch2].second - zeroInd[ch2].first);
         }
 
         if(readoutBufferSize == EVT_SIZE){
