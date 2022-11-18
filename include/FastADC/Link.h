@@ -79,6 +79,7 @@ private:
     CAEN_DGTZ_BoardInfo_t boardInfo;
     size_t currentEvent = 0;
     unsigned int short currentCell = 0;
+    bool preload = true;
 
 public:
     explicit Link(unsigned short link, std::array<std::latch*, SHOT_COUNT>& processed) : link(link), processed(processed){};

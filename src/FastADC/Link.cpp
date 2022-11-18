@@ -11,8 +11,6 @@
 int Link::init(Config& config){
     this->config = &config;
 
-    std::cout << link << ' ' << (int)(1 << (link + 1)) << ' ' << SetThreadAffinityMask(GetCurrentThread(), 1 << (link + 3)) << std::endl; //WINDOWS!!!
-
     for(int node = 0; node < 2; node++) {
         ret = CAEN_DGTZ_OpenDigitizer2(CAEN_DGTZ_OpticalLink, reinterpret_cast<void *>(&link), node, 0, &handles[node]);
         if (ret != CAEN_DGTZ_Success) {
@@ -129,7 +127,7 @@ bool Link::disarm() {
 
 bool Link::payload() {
     CAEN_DGTZ_ReadData(handles[0],CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT, readoutBuffer, &readoutBufferSize);
-    if(static_cast<double>(readoutBufferSize) == EVT_SIZE){
+    if(readoutBufferSize == EVT_SIZE || preload){
         char* group_pointer = readoutBuffer + 16;
         timestampConverter.integer = 0;
         timestampConverter.bytes[0] = *(group_pointer + 4 * 14 + 3);
@@ -223,11 +221,14 @@ bool Link::payload() {
             //ph_el[currentEvent][ch2] *= 0.78125;
         }
 
-        processed[currentEvent]->count_down();
-        currentEvent++;
-        if(currentEvent >= SHOT_COUNT){
-            std::cout << "CAEN 101+" << std::endl;
-            return true;
+        if(readoutBufferSize == EVT_SIZE){
+            preload = false;
+            processed[currentEvent]->count_down();
+            currentEvent++;
+            if(currentEvent >= SHOT_COUNT){
+                std::cout << "CAEN 101+" << std::endl;
+                return true;
+            }
         }
     }
     return false;
@@ -244,6 +245,8 @@ void Link::afterPayload() {
 }
 
 void Link::beforePayload() {
+    std::cout << link << ' ' << SetThreadAffinityMask(GetCurrentThread(), 1 << (link + 3)) << std::endl; //WINDOWS!!!
     currentEvent = 0;
+    preload = true;
 }
 

@@ -21,9 +21,6 @@ Crate::~Crate(){
 }
 
 bool Crate::init() {
-    SetThreadAffinityMask(GetCurrentThread(), 1 << 2);
-
-
     armed = false;
     for(unsigned int link = 0; link < config.linkCount; link++){
         std::cout << link << std::endl;
@@ -127,6 +124,7 @@ bool Crate::isAlive() {
 
 bool Crate::payload() {
     if(processed[currentEvent]->try_wait()){
+        preload = false;
         double ph_el = 0;
         for(size_t ch = 0; ch < 5; ch++){
             //ph_el += processors[1]->ph_el[currentEvent][ch + 11];
@@ -143,7 +141,12 @@ bool Crate::payload() {
                0, (const struct sockaddr *) &servaddr,
                sizeof(servaddr));
     }else{
-        std::this_thread::sleep_for(std::chrono::microseconds(100));
+        if(0 && preload){
+            buffer.val = 0;
+            sendto(sockfd, buffer.chars, 2,
+                   0, (const struct sockaddr *) &servaddr,
+                   sizeof(servaddr));
+        }
         return false;
     }
 
@@ -154,6 +157,7 @@ bool Crate::payload() {
 }
 
 void Crate::beforePayload() {
+    SetThreadAffinityMask(GetCurrentThread(), 1 << 2);
     //open socket
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
 
@@ -168,6 +172,7 @@ void Crate::beforePayload() {
     sendto(sockfd, buffer.chars, 2,
            0, (const struct sockaddr *) &servaddr,
            sizeof(servaddr));
+    preload = true;
 }
 
 void Crate::afterPayload() {
