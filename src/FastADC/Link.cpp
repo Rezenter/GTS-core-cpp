@@ -166,11 +166,22 @@ bool Link::payload() {
                 }
                 group_pointer += 4 * 16;
             }
-            ph_el[0][currentEvent][ch1] = (ph_el[0][currentEvent][ch1] - zero[0][currentEvent][ch1]) * RESOLUTION / (signalInd[ch1].second - signalInd[ch1].first);
-            ph_el[0][currentEvent][ch2] = (ph_el[0][currentEvent][ch2] - zero[0][currentEvent][ch2]) * RESOLUTION / (signalInd[ch2].second - signalInd[ch2].first);
-
             zero[0][currentEvent][ch1] = config->offset - 1250 + RESOLUTION * zero[0][currentEvent][ch1] / (zeroInd[ch1].second - zeroInd[ch1].first);
             zero[0][currentEvent][ch2] = config->offset - 1250 + RESOLUTION * zero[0][currentEvent][ch2] / (zeroInd[ch2].second - zeroInd[ch2].first);
+
+            ph_el[0][currentEvent][ch1] = config->offset - 1250 + RESOLUTION * ph_el[0][currentEvent][ch1] / (signalInd[ch1].second - signalInd[ch1].first);
+            if (ph_el[0][currentEvent][ch1] > zero[0][currentEvent][ch1]){
+                ph_el[0][currentEvent][ch1] -= zero[0][currentEvent][ch1];
+            }else{
+                ph_el[0][currentEvent][ch1] = 0;
+            }
+
+            ph_el[0][currentEvent][ch2] = config->offset - 1250 + RESOLUTION * ph_el[0][currentEvent][ch2] / (signalInd[ch2].second - signalInd[ch2].first);
+            if (ph_el[0][currentEvent][ch2] > zero[0][currentEvent][ch2]){
+                ph_el[0][currentEvent][ch2] -= zero[0][currentEvent][ch2];
+            }else{
+                ph_el[0][currentEvent][ch2] = 0;
+            }
         }
 
 
@@ -206,11 +217,21 @@ bool Link::payload() {
                 }
                 group_pointer += 4 * 16;
             }
-            ph_el[1][currentEvent][ch1] = (ph_el[1][currentEvent][ch1] - zero[1][currentEvent][ch1]) * RESOLUTION / (signalInd[ch1].second - signalInd[ch1].first);
-            ph_el[1][currentEvent][ch2] = (ph_el[1][currentEvent][ch2] - zero[1][currentEvent][ch2]) * RESOLUTION / (signalInd[ch2].second - signalInd[ch2].first);
-
             zero[1][currentEvent][ch1] = config->offset - 1250 + RESOLUTION * zero[1][currentEvent][ch1] / (zeroInd[ch1].second - zeroInd[ch1].first);
             zero[1][currentEvent][ch2] = config->offset - 1250 + RESOLUTION * zero[1][currentEvent][ch2] / (zeroInd[ch2].second - zeroInd[ch2].first);
+
+            ph_el[1][currentEvent][ch1] = config->offset - 1250 + RESOLUTION * ph_el[1][currentEvent][ch1] / (signalInd[ch1].second - signalInd[ch1].first);
+            if (ph_el[1][currentEvent][ch1] > zero[1][currentEvent][ch1]){
+                ph_el[1][currentEvent][ch1] -= zero[1][currentEvent][ch1];
+            }else{
+                ph_el[1][currentEvent][ch1] = 0;
+            }
+            ph_el[1][currentEvent][ch2] = config->offset - 1250 + RESOLUTION * ph_el[1][currentEvent][ch2] / (signalInd[ch2].second - signalInd[ch2].first);
+            if (ph_el[1][currentEvent][ch2] > zero[1][currentEvent][ch2]){
+                ph_el[1][currentEvent][ch2] -= zero[1][currentEvent][ch2];
+            }else{
+                ph_el[1][currentEvent][ch2] = 0;
+            }
         }
 
         if(readoutBufferSize == EVT_SIZE){
@@ -237,7 +258,9 @@ void Link::afterPayload() {
 }
 
 void Link::beforePayload() {
-    std::cout << link << ' ' << SetThreadAffinityMask(GetCurrentThread(), 1 << (link + 3)) << std::endl; //WINDOWS!!!
+    unsigned long long mask = 1 << (link + 3);
+    SetThreadAffinityMask(GetCurrentThread(), mask); //WINDOWS!!!
+    std::cout << "Link " << link << " thread: " << SetThreadAffinityMask(GetCurrentThread(), mask) << std::endl; //WINDOWS!!!
     currentEvent = 0;
     preload = true;
 }

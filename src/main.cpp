@@ -12,7 +12,9 @@
 int main([[maybe_unused]] int argc,[[maybe_unused]] char* argv[]) {
     std::cout << "TS C++ server, revision:" << REVISION << std::endl << std::flush;
     std::cout << std::filesystem::current_path() << '\n' <<std::flush;
-    std::cout << "Main thread: " << ' ' << SetThreadAffinityMask(GetCurrentThread(), 0b00000010) << std::endl; //WINDOWS!!!
+    unsigned long long mask = 1 << 1;
+    SetThreadAffinityMask(GetCurrentThread(), mask); //WINDOWS!!!
+    std::cout << "Main thread: " << ' ' << SetThreadAffinityMask(GetCurrentThread(), mask) << std::endl; //WINDOWS!!!
     try{
         http::server::server s("172.16.12.130", "8080", "../html/");
         s.run();

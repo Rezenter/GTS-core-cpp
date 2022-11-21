@@ -115,10 +115,9 @@ bool Crate::isAlive() {
 
 bool Crate::payload() {
     if(processed[currentEvent]->try_wait()){
-        preload = false;
         double ph_el = 0;
         for(size_t ch = 0; ch < 5; ch++){
-            ph_el += links[0]->ph_el[1][currentEvent][ch + 11];
+            ph_el += links[1]->ph_el[0][currentEvent][ch + 11];
         }
         //ph_el = (currentEvent + 1) * 40.0 * 60;
         ph_el = fmax(0.0, ph_el) * 0.0585;
@@ -129,24 +128,18 @@ bool Crate::payload() {
         sendto(sockfd, buffer.chars, 2,
                0, (const struct sockaddr *) &servaddr,
                sizeof(servaddr));
+        return currentEvent == SHOT_COUNT;
     }else{
-        if(preload){
-            buffer.val = 0;
-            sendto(sockfd, buffer.chars, 2,
-                   0, (const struct sockaddr *) &servaddr,
-                   sizeof(servaddr));
-        }
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
         return false;
     }
-
-    if(currentEvent == SHOT_COUNT){
-        return true;
-    }
-    return false;
 }
 
 void Crate::beforePayload() {
-    SetThreadAffinityMask(GetCurrentThread(), 1 << 2);
+    unsigned long long mask = 1 << 2;
+    SetThreadAffinityMask(GetCurrentThread(), mask);
+    std::cout << "Crate thread: " << SetThreadAffinityMask(GetCurrentThread(), mask) << std::endl;
+    currentEvent = 0;
     //open socket
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
 
@@ -155,18 +148,14 @@ void Crate::beforePayload() {
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(8080);
     servaddr.sin_addr.s_addr = inet_addr("192.168.10.56");
-    currentEvent = 0;
 
     buffer.val = 0;
     sendto(sockfd, buffer.chars, 2,
            0, (const struct sockaddr *) &servaddr,
            sizeof(servaddr));
-    preload = true;
 }
 
 void Crate::afterPayload() {
-    //close socket
-    closesocket(sockfd);
     std::cout << "crate events: " << currentEvent << std::endl;
     buffer.val = 0;
     sendto(sockfd, buffer.chars, 2,
@@ -175,4 +164,6 @@ void Crate::afterPayload() {
     for(size_t evenInd = 0; evenInd < SHOT_COUNT; evenInd++) {
         delete processed[evenInd];
     }
+    //close socket
+    closesocket(sockfd);
 }

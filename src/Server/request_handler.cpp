@@ -42,13 +42,14 @@ namespace http::server {
                 try{
                     Json payload = Json::parse(req.payload);
                     if(payload.contains("subsystem")){
+                        Json resp;
                         if(payload.at("subsystem") == "ADC"){
-                            Json resp = fastSystem.requestHandler(payload);
-                            resp["unix"] = std::chrono::duration_cast<std::chrono::seconds>(
-                                    std::chrono::system_clock::now().time_since_epoch()).count();
-                            rep = reply::api_reply(to_string(resp));
-                            return;
+                            resp = fastSystem.requestHandler(payload);
                         }
+                        resp["unix"] = std::chrono::duration_cast<std::chrono::seconds>(
+                                std::chrono::system_clock::now().time_since_epoch()).count();
+                        rep = reply::api_reply(to_string(resp));
+                        return;
                     }
                 }catch(Json::parse_error& err){
                     rep = reply::stock_reply(reply::bad_request);
