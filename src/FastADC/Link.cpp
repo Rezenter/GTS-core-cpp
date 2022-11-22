@@ -135,7 +135,7 @@ bool Link::payload() {
         timestampConverter.bytes[2] = *(group_pointer + 4 * 16 + 3);
         timestampConverter.bytes[3] = *(group_pointer + 4 * 17 + 3);
         timestampConverter.bytes[4] = *(group_pointer + 4 * 18 + 3);
-        times[currentEvent] = timestampConverter.integer;
+        times[currentEvent] = timestampConverter.integer & 0x000FFFFF;
 
         for (int groupIdx = 0; groupIdx < MAX_V1743_GROUP_SIZE; groupIdx++) {
             size_t ch1 = 2 * groupIdx;
@@ -166,19 +166,21 @@ bool Link::payload() {
                 }
                 group_pointer += 4 * 16;
             }
-            zero[0][currentEvent][ch1] = config->offset - 1250 + RESOLUTION * zero[0][currentEvent][ch1] / (zeroInd[ch1].second - zeroInd[ch1].first);
-            zero[0][currentEvent][ch2] = config->offset - 1250 + RESOLUTION * zero[0][currentEvent][ch2] / (zeroInd[ch2].second - zeroInd[ch2].first);
+            zero[0][currentEvent][ch1] = (config->offset - 1250 + RESOLUTION * zero[0][currentEvent][ch1]) / (zeroInd[ch1].second - zeroInd[ch1].first);
+            zero[0][currentEvent][ch2] = (config->offset - 1250 + RESOLUTION * zero[0][currentEvent][ch2]) / (zeroInd[ch2].second - zeroInd[ch2].first);
 
-            ph_el[0][currentEvent][ch1] = config->offset - 1250 + RESOLUTION * ph_el[0][currentEvent][ch1] / (signalInd[ch1].second - signalInd[ch1].first);
-            if (ph_el[0][currentEvent][ch1] > zero[0][currentEvent][ch1]){
-                ph_el[0][currentEvent][ch1] -= zero[0][currentEvent][ch1];
+            ph_el[0][currentEvent][ch1] = config->offset - 1250 + RESOLUTION * ph_el[0][currentEvent][ch1];
+            unsigned int tmp = zero[0][currentEvent][ch1] * (signalInd[ch1].second - signalInd[ch1].first);
+            if (ph_el[0][currentEvent][ch1] > tmp){
+                ph_el[0][currentEvent][ch1] -= tmp;
             }else{
                 ph_el[0][currentEvent][ch1] = 0;
             }
 
-            ph_el[0][currentEvent][ch2] = config->offset - 1250 + RESOLUTION * ph_el[0][currentEvent][ch2] / (signalInd[ch2].second - signalInd[ch2].first);
-            if (ph_el[0][currentEvent][ch2] > zero[0][currentEvent][ch2]){
-                ph_el[0][currentEvent][ch2] -= zero[0][currentEvent][ch2];
+            ph_el[0][currentEvent][ch2] = config->offset - 1250 + RESOLUTION * ph_el[0][currentEvent][ch2];
+            tmp = zero[0][currentEvent][ch2] * (signalInd[ch2].second - signalInd[ch2].first);
+            if (ph_el[0][currentEvent][ch2] > tmp){
+                ph_el[0][currentEvent][ch2] -= tmp;
             }else{
                 ph_el[0][currentEvent][ch2] = 0;
             }
@@ -217,18 +219,20 @@ bool Link::payload() {
                 }
                 group_pointer += 4 * 16;
             }
-            zero[1][currentEvent][ch1] = config->offset - 1250 + RESOLUTION * zero[1][currentEvent][ch1] / (zeroInd[ch1].second - zeroInd[ch1].first);
-            zero[1][currentEvent][ch2] = config->offset - 1250 + RESOLUTION * zero[1][currentEvent][ch2] / (zeroInd[ch2].second - zeroInd[ch2].first);
+            zero[1][currentEvent][ch1] = (config->offset - 1250 + RESOLUTION * zero[1][currentEvent][ch1]) / (zeroInd[ch1].second - zeroInd[ch1].first);
+            zero[1][currentEvent][ch2] = (config->offset - 1250 + RESOLUTION * zero[1][currentEvent][ch2]) / (zeroInd[ch2].second - zeroInd[ch2].first);
 
-            ph_el[1][currentEvent][ch1] = config->offset - 1250 + RESOLUTION * ph_el[1][currentEvent][ch1] / (signalInd[ch1].second - signalInd[ch1].first);
-            if (ph_el[1][currentEvent][ch1] > zero[1][currentEvent][ch1]){
-                ph_el[1][currentEvent][ch1] -= zero[1][currentEvent][ch1];
+            ph_el[1][currentEvent][ch1] = config->offset - 1250 + RESOLUTION * ph_el[1][currentEvent][ch1];
+            unsigned int tmp = zero[1][currentEvent][ch1] * (signalInd[ch1].second - signalInd[ch1].first);
+            if (ph_el[1][currentEvent][ch1] > tmp){
+                ph_el[1][currentEvent][ch1] -= tmp;
             }else{
                 ph_el[1][currentEvent][ch1] = 0;
             }
-            ph_el[1][currentEvent][ch2] = config->offset - 1250 + RESOLUTION * ph_el[1][currentEvent][ch2] / (signalInd[ch2].second - signalInd[ch2].first);
-            if (ph_el[1][currentEvent][ch2] > zero[1][currentEvent][ch2]){
-                ph_el[1][currentEvent][ch2] -= zero[1][currentEvent][ch2];
+            ph_el[1][currentEvent][ch2] = config->offset - 1250 + RESOLUTION * ph_el[1][currentEvent][ch2];
+            tmp = zero[1][currentEvent][ch2] * (signalInd[ch2].second - signalInd[ch2].first);
+            if (ph_el[1][currentEvent][ch2] > tmp){
+                ph_el[1][currentEvent][ch2] -= tmp;
             }else{
                 ph_el[1][currentEvent][ch2] = 0;
             }

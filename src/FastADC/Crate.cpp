@@ -120,7 +120,7 @@ bool Crate::payload() {
             ph_el += links[1]->ph_el[0][currentEvent][ch + 11];
         }
         //ph_el = (currentEvent + 1) * 40.0 * 60;
-        ph_el = fmax(0.0, ph_el) * 0.0585;
+        ph_el = fmax(0.0, ph_el) * 0.023;
         ph_el = fmin(4095, ph_el);
         buffer.val = floor(ph_el);
         DAC1[currentEvent] = buffer.val;
