@@ -81,6 +81,8 @@ private:
     size_t currentEvent = 0;
     unsigned int short currentCell = 0;
     bool preload = true;
+    //unsigned short count_1 = 0;
+    //unsigned short count_2 = 0;
 
 public:
     explicit Link(unsigned short link, std::array<std::latch*, SHOT_COUNT>& processed) : link(link), processed(processed){};

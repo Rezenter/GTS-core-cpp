@@ -128,6 +128,9 @@ bool Link::disarm() {
 bool Link::payload() {
     CAEN_DGTZ_ReadData(handles[0],CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT, readoutBuffer, &readoutBufferSize);
     if(readoutBufferSize == EVT_SIZE || preload){
+        /*if(readoutBufferSize == EVT_SIZE){
+            count_1 ++;
+        }*/
         char* group_pointer = readoutBuffer + 16;
         timestampConverter.integer = 0;
         timestampConverter.bytes[0] = *(group_pointer + 4 * 14 + 3);
@@ -135,7 +138,7 @@ bool Link::payload() {
         timestampConverter.bytes[2] = *(group_pointer + 4 * 16 + 3);
         timestampConverter.bytes[3] = *(group_pointer + 4 * 17 + 3);
         timestampConverter.bytes[4] = *(group_pointer + 4 * 18 + 3);
-        times[currentEvent] = timestampConverter.integer & 0x000FFFFF;
+        times[currentEvent] = timestampConverter.integer;
 
         for (int groupIdx = 0; groupIdx < MAX_V1743_GROUP_SIZE; groupIdx++) {
             size_t ch1 = 2 * groupIdx;
@@ -187,8 +190,13 @@ bool Link::payload() {
         }
 
 
-
-        CAEN_DGTZ_ReadData(handles[1],CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT, readoutBuffer, &readoutBufferSize);
+        if(readoutBufferSize == EVT_SIZE) {
+            CAEN_DGTZ_ReadData(handles[1], CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT, readoutBuffer, &readoutBufferSize);
+            /*
+            if(readoutBufferSize == EVT_SIZE){
+                count_2 ++;
+            }*/
+        }
         group_pointer = readoutBuffer + 16;
 
         for (int groupIdx = 0; groupIdx < MAX_V1743_GROUP_SIZE; groupIdx++) {
@@ -243,6 +251,7 @@ bool Link::payload() {
             processed[currentEvent]->count_down();
             currentEvent++;
             if(currentEvent >= SHOT_COUNT){
+                //std::cout << "Link " << link << " counts: " << count_1 << ' ' << count_2 << std::endl;
                 std::cout << "CAEN 101+" << std::endl;
                 return true;
             }
@@ -267,5 +276,8 @@ void Link::beforePayload() {
     std::cout << "Link " << link << " thread: " << SetThreadAffinityMask(GetCurrentThread(), mask) << std::endl; //WINDOWS!!!
     currentEvent = 0;
     preload = true;
+
+    //count_1 = 0;
+    //count_2 = 0;
 }
 

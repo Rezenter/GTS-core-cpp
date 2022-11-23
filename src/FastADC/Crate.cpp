@@ -81,7 +81,6 @@ Json Crate::disarm() {
     for(unsigned int link = 0; link < config.linkCount; link++){
         links[link]->disarm();
     }
-    std::cout << "alive" << std::endl;
     for(size_t board = 0; board < config.linkCount * 2; board++){
         Json boardData = Json::array();
 
@@ -90,10 +89,11 @@ Json Crate::disarm() {
                                     {"ch",    links[board % config.linkCount]->result[board / config.linkCount][event_ind]},
                                     {"ph_el", links[board % config.linkCount]->ph_el[board / config.linkCount][event_ind]},
                                     {"t",     (double)(links[board % config.linkCount]->times[event_ind] - links[board % config.linkCount]->times[0]) * 5e-6},
-                                    {"DAC1",  DAC1[event_ind]}
+                                    {"DAC1",  DAC1[event_ind]},
+                                    {"t_raw", links[board % config.linkCount]->times[event_ind]}
             });
         }
-
+        boardData[0]["t"] = 0;
         result["boards"].push_back(boardData);
         result["header"]["boards"].push_back(links[board % config.linkCount]->serials[board / config.linkCount]);
     }
@@ -120,7 +120,7 @@ bool Crate::payload() {
             ph_el += links[1]->ph_el[0][currentEvent][ch + 11];
         }
         //ph_el = (currentEvent + 1) * 40.0 * 60;
-        ph_el = fmax(0.0, ph_el) * 0.023;
+        ph_el = fmax(0.0, ph_el) * 0.023; // FOR 1.6 J ONLY!!!
         ph_el = fmin(4095, ph_el);
         buffer.val = floor(ph_el);
         DAC1[currentEvent] = buffer.val;
