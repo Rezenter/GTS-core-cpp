@@ -30,6 +30,7 @@ private:
     bool armed = false;
     std::array<unsigned short , SHOT_COUNT> DAC1;
     std::array<std::latch*, SHOT_COUNT> processed;
+    Json result;
 
 public:
     ~Crate() override;

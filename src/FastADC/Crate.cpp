@@ -59,44 +59,17 @@ bool Crate::arm() {
 
 Json Crate::disarm() {
     if(!armed){
-        Json result = {
+        result = {
                 {"err", "Crate is not armed!"}
         };
         return result;
     }
     armed = false;
     std::cout << "disarming..." << std::endl;
-    Json result = {
-            {"header", {
-                               {"version", 3},
-                               {"eventLength", config.recordLength},
-                               {"frequency", config.freqStr()},
-                               {"boards", Json::array()},
-                               {"offset", config.offset},
-                               {"aux", config.aux_args}
-                       }
-            },
-            {"boards", Json::array()}
-    };
     for(unsigned int link = 0; link < config.linkCount; link++){
         links[link]->disarm();
     }
-    for(size_t board = 0; board < config.linkCount * 2; board++){
-        Json boardData = Json::array();
 
-        for (size_t event_ind = 0; event_ind < SHOT_COUNT; event_ind++) {
-            boardData.push_back({
-                                    {"ch",    links[board % config.linkCount]->result[board / config.linkCount][event_ind]},
-                                    {"ph_el", links[board % config.linkCount]->ph_el[board / config.linkCount][event_ind]},
-                                    {"t",     (double)(links[board % config.linkCount]->times[event_ind] - links[board % config.linkCount]->times[0]) * 5e-6},
-                                    {"DAC1",  DAC1[event_ind]},
-                                    {"t_raw", links[board % config.linkCount]->times[event_ind]}
-            });
-        }
-        boardData[0]["t"] = 0;
-        result["boards"].push_back(boardData);
-        result["header"]["boards"].push_back(links[board % config.linkCount]->serials[board / config.linkCount]);
-    }
     this->requestStop();
     std::cout << "all joined" << std::endl;
     associatedThread.join();
@@ -136,6 +109,7 @@ bool Crate::payload() {
 }
 
 void Crate::beforePayload() {
+    result = {};
     unsigned long long mask = 1 << 2;
     SetThreadAffinityMask(GetCurrentThread(), mask);
     std::cout << "Crate thread: " << SetThreadAffinityMask(GetCurrentThread(), mask) << std::endl;
@@ -166,4 +140,33 @@ void Crate::afterPayload() {
     }
     //close socket
     closesocket(sockfd);
+
+    result = {
+            {"header", {
+                               {"version", 3},
+                               {"eventLength", config.recordLength},
+                               {"frequency", config.freqStr()},
+                               {"boards", Json::array()},
+                               {"offset", config.offset},
+                               {"aux", config.aux_args}
+                       }
+            },
+            {"boards", Json::array()}
+    };
+    for(size_t board = 0; board < config.linkCount * 2; board++){
+        Json boardData = Json::array();
+
+        for (size_t event_ind = 0; event_ind < SHOT_COUNT; event_ind++) {
+            boardData.push_back({
+                                    {"ch",    links[board % config.linkCount]->result[board / config.linkCount][event_ind]},
+                                    {"ph_el", links[board % config.linkCount]->ph_el[board / config.linkCount][event_ind]},
+                                    {"t",     (double)(links[board % config.linkCount]->times[event_ind] - links[board % config.linkCount]->times[0]) * 5e-6},
+                                    {"DAC1",  DAC1[event_ind]},
+                                    {"t_raw", links[board % config.linkCount]->times[event_ind]}
+            });
+        }
+        boardData[0]["t"] = 0;
+        result["boards"].push_back(boardData);
+        result["header"]["boards"].push_back(links[board % config.linkCount]->serials[board / config.linkCount]);
+    }
 }

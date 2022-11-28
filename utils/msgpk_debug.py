@@ -6,7 +6,7 @@ path = 'd:/data/db/debug/raw/'
 group_count = 8
 _ch_count = 2
 
-shotn = 701
+shotn = 702
 
 shot_folder = '%s%05d' % (path, shotn)
 FILE_EXT = 'msgpk'

@@ -40,6 +40,13 @@ namespace http::server {
 
             if(req.method == "POST"){
                 try{
+                    //add thread here
+                    /*
+                    std::thread([&](){
+                        run();
+                    });
+                     */
+
                     Json payload = Json::parse(req.payload);
                     if(payload.contains("subsystem")){
                         Json resp;
