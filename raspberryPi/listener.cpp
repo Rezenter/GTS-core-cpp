@@ -20,6 +20,8 @@ union Packet{
 int main([[maybe_unused]] int argc,[[maybe_unused]] char* argv[]) {
     printf("Initial\n");
     int file;
+    int i2cAddr1 = 0x61;
+    int i2cAddr2 = 0x60;
     int adapter_nr = 1;
     char filename[20];
     snprintf(filename, 19, "/dev/i2c-%d", adapter_nr);
@@ -28,8 +30,10 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char* argv[]) {
         return 1;
     }
 
-    int i2cAddr = 0x61;
-    if (ioctl(file, I2C_SLAVE, i2cAddr) < 0) {
+    if (ioctl(file, I2C_SLAVE, i2cAddr1) < 0) {
+        return 2;
+    }
+    if (ioctl(file, I2C_SLAVE, i2cAddr2) < 0) {
         return 2;
     }
 
@@ -46,15 +50,20 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char* argv[]) {
         perror("Connection error");
         return 3;
     }
-    int n, len;
     char buffer[16];
     Packet packet;
     printf("listening...\n");
     while(1) {
-        n = recv(sockfd, buffer, 16, MSG_DONTWAIT) > 0;
-        if(n > 0) {
+        if(recv(sockfd, buffer, 16, MSG_DONTWAIT) > 3) {
+            ioctl(file, I2C_SLAVE, i2cAddr1);
             packet.bytes[0] = buffer[1] & 0x0F;
             packet.bytes[1] = buffer[0];
+            if (write(file, packet.bytes, 2) != 2) {
+                return 5;
+            }
+            ioctl(file, I2C_SLAVE, i2cAddr2);
+            packet.bytes[0] = buffer[3] & 0x0F;
+            packet.bytes[1] = buffer[2];
             if (write(file, packet.bytes, 2) != 2) {
                 return 5;
             }
