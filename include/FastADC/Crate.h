@@ -10,8 +10,8 @@
 #include "Config.h"
 
 union Buffer{
-    unsigned short int val;
-    char chars[2];
+    unsigned short int val[2];
+    char chars[4];
 };
 
 class Crate : public Stoppable{

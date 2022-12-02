@@ -83,6 +83,7 @@ bool Crate::isAlive() {
             return false;
         }
     }
+    std::this_thread::sleep_for(std::chrono::seconds(5));
     return true;
 }
 
@@ -95,10 +96,13 @@ bool Crate::payload() {
         //ph_el = (currentEvent + 1) * 40.0 * 60;
         ph_el = fmax(0.0, ph_el) * 0.023; // FOR 1.6 J ONLY!!!
         ph_el = fmin(4095, ph_el);
-        buffer.val = floor(ph_el);
-        DAC1[currentEvent] = buffer.val;
+        buffer.val[0] = floor(ph_el);
+        DAC1[currentEvent] = buffer.val[0];
+
+        buffer.val[1] = fmin(3276, 0); // limit gas puff to 4 volts
+
         currentEvent++;
-        sendto(sockfd, buffer.chars, 2,
+        sendto(sockfd, buffer.chars, 4,
                0, (const struct sockaddr *) &servaddr,
                sizeof(servaddr));
         return currentEvent == SHOT_COUNT;
@@ -123,16 +127,18 @@ void Crate::beforePayload() {
     servaddr.sin_port = htons(8080);
     servaddr.sin_addr.s_addr = inet_addr("192.168.10.56");
 
-    buffer.val = 0;
-    sendto(sockfd, buffer.chars, 2,
+    buffer.val[0] = 0;
+    buffer.val[1] = 0;
+    sendto(sockfd, buffer.chars, 4,
            0, (const struct sockaddr *) &servaddr,
            sizeof(servaddr));
 }
 
 void Crate::afterPayload() {
     std::cout << "crate events: " << currentEvent << std::endl;
-    buffer.val = 0;
-    sendto(sockfd, buffer.chars, 2,
+    buffer.val[0] = 0;
+    buffer.val[1] = 0;
+    sendto(sockfd, buffer.chars, 4,
            0, (const struct sockaddr *) &servaddr,
            sizeof(servaddr));
     for(size_t evenInd = 0; evenInd < SHOT_COUNT; evenInd++) {

@@ -19,7 +19,7 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char* argv[]) {
     SetThreadAffinityMask(GetCurrentThread(), mask); //WINDOWS!!!
     std::cout << "Main thread: " << ' ' << SetThreadAffinityMask(GetCurrentThread(), mask) << std::endl; //WINDOWS!!!
     try{
-        http::server::server s("172.16.12.130", "8080", "../html/");
+        http::server3::server s("172.16.12.130", "8080", "../html/", 4); // 4 = num_threads
         s.run();
     }
     catch (std::exception& e){

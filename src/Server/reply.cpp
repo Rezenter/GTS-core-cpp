@@ -2,7 +2,7 @@
 // reply.cpp
 // ~~~~~~~~~
 //
-// Copyright (c) 2003-2021 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2017 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -10,10 +10,10 @@
 
 #include "Server/reply.hpp"
 #include <string>
-#include <utility>
+#include <boost/lexical_cast.hpp>
 
 namespace http {
-    namespace server {
+    namespace server3 {
 
         namespace status_strings {
 
@@ -246,7 +246,7 @@ namespace http {
             rep.content = stock_replies::to_string(status);
             rep.headers.resize(2);
             rep.headers[0].name = "Content-Length";
-            rep.headers[0].value = std::to_string(rep.content.size());
+            rep.headers[0].value = boost::lexical_cast<std::string>(rep.content.size());
             rep.headers[1].name = "Content-Type";
             rep.headers[1].value = "text/html";
             return rep;
@@ -265,5 +265,5 @@ namespace http {
             return rep;
         }
 
-    } // namespace server
+    } // namespace server3
 } // namespace http
