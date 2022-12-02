@@ -29,14 +29,6 @@ bool Storage::saveDischarge(const Json& data) const {
     int count = 0;
     std::stringstream filename;
     for(auto& board : data["boards"]){
-        /*
-        filename.str(std::string());
-        filename << count << ".json";
-        outFile.open(pathStr + filename.str());
-        outFile << std::setw(2) << board << std::endl;
-        outFile.close();
-        */
-
         filename.str(std::string());
         filename << count++ << ".msgpk";
         outFile.open(pathStr + filename.str(), std::ios::out | std::ios::binary);
@@ -72,4 +64,17 @@ bool Storage::isAlive() const {
     debugShotnFile >> config.debugShot;
     debugShotnFile.close();
     return true;
+}
+
+Json Storage::getSavesNames() {
+    //get configs
+
+    //get spectral
+
+    //get abs
+
+    //get gas
+    for (const auto & entry : std::filesystem::directory_iterator(config.gasPath))
+        std::cout << entry.path() << std::endl;
+    return Json();
 }

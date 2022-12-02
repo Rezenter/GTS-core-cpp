@@ -28,6 +28,8 @@ public:
 
     bool saveDischarge(const Json& data) const;
     [[nodiscard]] bool isAlive() const;
+
+    Json getSavesNames();
 };
 
 
