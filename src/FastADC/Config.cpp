@@ -36,7 +36,7 @@ bool Config::load(std::string path) {
                             break;
                         }
                         links[i] = caen["link"];
-                        nodes[i] = caen["node"];
+                        //nodes[i] = caen["node"];
                     }else{
                         flag = false;
                         std::cout << "Wrong caen link/node description!" << std::endl;
@@ -56,7 +56,7 @@ bool Config::load(std::string path) {
         std::cout << "Config file missing '" << key << "' section, using defaults." << std::endl;
     }
 
-
+    /*
     key = "experiment";
     if(config.contains(key)){
         section = config[key];
@@ -72,6 +72,7 @@ bool Config::load(std::string path) {
         flag = false;
         std::cout << "Config file missing '" << key << "' section, using defaults." << std::endl;
     }
+    */
 
     key = "caen";
     if(config.contains(key)){
@@ -144,7 +145,7 @@ bool Config::load(std::string path) {
             float candidate = section[key];
             if(-1250 + offset <= candidate && candidate <= 1250 + offset){
                 triggerThreshold = candidate;
-                triggerThresholdADC = (1250 + offset - triggerThreshold) * 0xFFFF / 2500;
+                //triggerThresholdADC = (1250 + offset - triggerThreshold) * 0xFFFF / 2500;
             }else{
                 flag = false;
                 std::cout << "Wrong value for '" << key << "' = " << candidate << '.' << std::endl;

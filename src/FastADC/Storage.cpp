@@ -66,15 +66,65 @@ bool Storage::isAlive() const {
     return true;
 }
 
-Json Storage::getSavesNames() {
+Json Storage::getConfigsNames() {
+    Json res = {};
+
     //get configs
+    res["configs"] = Json::array();
+    for (const auto & entry : std::filesystem::directory_iterator(config.configsPath)) {
+        res["configs"].push_back(entry.path().filename());
+    }
 
     //get spectral
+    res["spectral"] = Json::array();
+    for (const auto & entry : std::filesystem::directory_iterator(config.spectralPath)) {
+        res["spectral"].push_back(entry.path().filename());
+    }
 
     //get abs
+    res["abs"] = Json::array();
+    for (const auto & entry : std::filesystem::directory_iterator(config.absPath)) {
+        res["abs"].push_back(entry.path().filename());
+    }
+
 
     //get gas
-    for (const auto & entry : std::filesystem::directory_iterator(config.gasPath))
-        std::cout << entry.path() << std::endl;
-    return Json();
+    res["gas"] = Json::array();
+    for (const auto & entry : std::filesystem::directory_iterator(config.gasPath)) {
+        res["gas"].push_back(entry.path().filename());
+
+    }
+    return res;
+}
+
+Json Storage::getGas(const std::string& name) {
+    Json res = {};
+
+    std::filesystem::path path = config.gasPath + name;
+    if(!std::filesystem::is_regular_file(path)){
+        res["ok"] = false;
+        res["err"] = "no such file " + path.string();
+        return res;
+    }
+
+    std::ifstream file;
+    file.open(path);
+    res["data"] = Json::parse(file);
+    file.close();
+
+    res["ok"] = true;
+    return res;
+}
+
+bool Storage::saveGas(const std::string &name, const Json& prog) {
+    std::filesystem::path path = config.gasPath + name + ".json";
+    if(std::filesystem::is_regular_file(path)){
+        return false;
+    }
+
+    std::ofstream outFile;
+    outFile.open(path, std::ios::out);
+    outFile << prog.dump(2);
+    outFile.close();
+    return true;
 }

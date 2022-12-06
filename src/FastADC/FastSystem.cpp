@@ -35,15 +35,10 @@ bool FastSystem::isAlive() {
 
 bool FastSystem::init() {
     this->ready = false;
-    this->config = new Config();
-    if(!this->config->load()){
-        std::cout << "something went wrong during loading config." << std::endl;
-    }
     std::cout << "Voltage range: [" << this->config->offset - 1250 << ", " << this->config->offset + 1250 << "] mv." << std::endl;
     //std::cout << "Trigger level = " << config.triggerThreshold << " mv." << std::endl; // ch0 trigger should not be used
 
     this->crate = new Crate(*this->config);
-    this->storage = new Storage(*this->config);
     this->ready = true;
     if(!isAlive()){
         std::cout << "FastSystem init failed" << std::endl;
@@ -72,7 +67,11 @@ FastSystem::~FastSystem() {
 }
 
 FastSystem::FastSystem() {
-
+    this->config = new Config();
+    if(!this->config->load()){
+        std::cout << "something went wrong during loading config." << std::endl;
+    }
+    this->storage = new Storage(*this->config);
 }
 
 Json FastSystem::requestHandler(Json req){
@@ -133,6 +132,13 @@ Json FastSystem::requestHandler(Json req){
                     resp["plasma_shotn"] = 99999;
                     resp["debug_shotn"] = 99999;
                 }
+        }else if(req.at("reqtype") == "configs"){
+                resp["data"] = this->storage->getConfigsNames();
+        }else if(req.at("reqtype") == "getGas"){
+                return this->storage->getGas(req.at("name"));
+        }else if(req.at("reqtype") == "saveGas"){
+                resp["ok"] = this->storage->saveGas(req.at("name"), req.at("prog"));
+                return resp;
         }
     }else{
         resp["ok"] = false;

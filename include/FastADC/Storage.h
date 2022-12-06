@@ -29,7 +29,9 @@ public:
     bool saveDischarge(const Json& data) const;
     [[nodiscard]] bool isAlive() const;
 
-    Json getSavesNames();
+    Json getConfigsNames();
+    Json getGas(const std::string& name);
+    bool saveGas(const std::string& name, const Json& prog);
 };
 
 

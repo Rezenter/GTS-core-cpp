@@ -271,7 +271,7 @@ void Link::afterPayload() {
 }
 
 void Link::beforePayload() {
-    unsigned long long mask = 1 << (link + 3);
+    unsigned long long mask = 1 << (link + 2);
     SetThreadAffinityMask(GetCurrentThread(), mask); //WINDOWS!!!
     std::cout << "Link " << link << " thread: " << SetThreadAffinityMask(GetCurrentThread(), mask) << std::endl; //WINDOWS!!!
     currentEvent = 0;

@@ -113,7 +113,7 @@ bool Crate::payload() {
 
 void Crate::beforePayload() {
     result = {};
-    unsigned long long mask = 1 << 2;
+    unsigned long long mask = 1 << 1;
     SetThreadAffinityMask(GetCurrentThread(), mask);
     std::cout << "Crate thread: " << SetThreadAffinityMask(GetCurrentThread(), mask) << std::endl;
     currentEvent = 0;
