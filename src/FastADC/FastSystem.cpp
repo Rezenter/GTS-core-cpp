@@ -15,7 +15,7 @@ bool FastSystem::arm() {
 bool FastSystem::disarm() {
     if(this->armed){
         this->armed = false;
-        return storage->saveDischarge(crate->disarm());
+        return crate->disarm();
     }
     return true;
 }
@@ -38,7 +38,7 @@ bool FastSystem::init() {
     std::cout << "Voltage range: [" << this->config->offset - 1250 << ", " << this->config->offset + 1250 << "] mv." << std::endl;
     //std::cout << "Trigger level = " << config.triggerThreshold << " mv." << std::endl; // ch0 trigger should not be used
 
-    this->crate = new Crate(*this->config);
+    this->crate = new Crate(*this->config, *this->storage);
     this->ready = true;
     if(!isAlive()){
         std::cout << "FastSystem init failed" << std::endl;

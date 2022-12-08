@@ -336,7 +336,11 @@
                 if((this.xValue >= dps[i].x - this.xSnapDistance && this.xValue <= dps[i].x + this.xSnapDistance) &&
                     (this.yValue >= dps[i].y - this.ySnapDistance && this.yValue <= dps[i].y + this.ySnapDistance) ) {
                     if(this.mouseDown) {
-                        this.selected = i;
+                        if(i === 0 || i === dps.length - 1){
+                            this.selected = null;
+                        }else{
+                            this.selected = i;
+                        }
                     }
                     break;
                 } else {
@@ -357,7 +361,9 @@
                 clearTimeout(this.timerId);
                 this.timerId = setTimeout(function(){
                     if(this.selected != null) {
+                        //limit x movement
                         this.aqc_gas_evo_chart.data[0].dataPoints[this.selected].x = this.xValue;
+
                         this.aqc_gas_evo_chart.data[0].dataPoints[this.selected].y = this.yValue;
                         this.aqc_gas_evo_chart.render();
                     }
@@ -406,7 +412,7 @@
         this.SaveGasProgram = function(){
             let prog = {
                 type: 'gas',
-                valve_coeff: $('#gas_coeff').val(),
+                valve_coeff: parseFloat($('#gas_coeff').val()) * 1e-19,
                 version: 0,
                 desired_ne: []
             };

@@ -8,6 +8,7 @@
 #include "Link.h"
 
 #include "Config.h"
+#include "Storage.h"
 
 union Buffer{
     unsigned short int val[2];
@@ -18,6 +19,7 @@ class Crate : public Stoppable{
 private:
     Buffer buffer;
     Config& config;
+    Storage& storage;
     Link* links[MAX_LINKS];
 
     bool payload() override;
@@ -28,18 +30,24 @@ private:
     struct sockaddr_in servaddr;
     size_t currentEvent = 0;
     bool armed = false;
-    std::array<unsigned short , SHOT_COUNT> DAC1;
     std::array<std::latch*, SHOT_COUNT> processed;
-    Json result;
+
+    std::array<unsigned short , SHOT_COUNT> DAC1;
+    std::array<unsigned short , SHOT_COUNT> DAC2;
+    double expectedNePerShot[SHOT_COUNT];
+    double measuredNeShot[SHOT_COUNT];
+    double neError[SHOT_COUNT];
+    double ph_el[SHOT_COUNT];
+    double p_coeff = 0.0;
 
 public:
     ~Crate() override;
-    explicit Crate(Config& config);
+    explicit Crate(Config& config, Storage& storage);
     bool arm();
-    Json disarm();
+    bool disarm();
     bool isAlive();
-
     bool init();
+    Json result;
 };
 
 
