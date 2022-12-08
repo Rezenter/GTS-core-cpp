@@ -362,7 +362,10 @@
                 this.timerId = setTimeout(function(){
                     if(this.selected != null) {
                         //limit x movement
-                        this.aqc_gas_evo_chart.data[0].dataPoints[this.selected].x = this.xValue;
+                        if(this.aqc_gas_evo_chart.data[0].dataPoints[this.selected - 1].x <= this.xValue &&
+                            this.aqc_gas_evo_chart.data[0].dataPoints[this.selected + 1].x >= this.xValue){
+                            this.aqc_gas_evo_chart.data[0].dataPoints[this.selected].x = this.xValue;
+                        }
 
                         this.aqc_gas_evo_chart.data[0].dataPoints[this.selected].y = this.yValue;
                         this.aqc_gas_evo_chart.render();
@@ -375,7 +378,10 @@
 
         this.gasChartMouseup = function(e) {
             if(this.selected != null) {
-                this.aqc_gas_evo_chart.data[0].dataPoints[this.selected].x = this.xValue;
+                if(this.aqc_gas_evo_chart.data[0].dataPoints[this.selected - 1].x <= this.xValue &&
+                    this.aqc_gas_evo_chart.data[0].dataPoints[this.selected + 1].x >= this.xValue){
+                    this.aqc_gas_evo_chart.data[0].dataPoints[this.selected].x = this.xValue;
+                }
                 this.aqc_gas_evo_chart.data[0].dataPoints[this.selected].y = this.yValue;
                 this.aqc_gas_evo_chart.render();
                 this.mouseDown = false;

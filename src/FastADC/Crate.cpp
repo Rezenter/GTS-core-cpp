@@ -64,7 +64,7 @@ bool Crate::arm() {
         while(current_ind < prog["data"]["desired_ne"].size() && prog["data"]["desired_ne"][current_ind]["time"] < time){
             current_ind ++;
         }
-        expectedNePerShot[eventInd] = (double)prog["data"]["desired_ne"][current_ind - 1]["ne"] + ((double)prog["data"]["desired_ne"][current_ind - 1]["ne"] - (double)prog["data"]["desired_ne"][current_ind]["ne"]) * (time - (double)prog["data"]["desired_ne"][current_ind - 1]["time"]) / ((double)prog["data"]["desired_ne"][current_ind]["time"] - (double)prog["data"]["desired_ne"][current_ind - 1]["time"]);
+        expectedNePerShot[eventInd] = (double)prog["data"]["desired_ne"][current_ind - 1]["ne"] + ((double)prog["data"]["desired_ne"][current_ind]["ne"] - (double)prog["data"]["desired_ne"][current_ind - 1]["ne"]) * (time - (double)prog["data"]["desired_ne"][current_ind - 1]["time"]) / ((double)prog["data"]["desired_ne"][current_ind]["time"] - (double)prog["data"]["desired_ne"][current_ind - 1]["time"]);
         measuredNeShot[eventInd] = 0.0;
         neError[eventInd] = 0.0;
         ph_el[eventInd] = 0.0;
