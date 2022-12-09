@@ -72,32 +72,28 @@ bool Crate::arm() {
     p_coeff = (double)prog["data"]["valve_coeff"];
     std::cout << "done" << std::endl;
 
-    armed = true;
     for(unsigned int count = 0; count < config.linkCount; count++){
         if(!links[count]->arm()) {
             return false;
         }
     }
-    DAC1.fill(0);
+    armed = true;
     associatedThread = std::thread([&](){
         run();
     });
-    for(size_t eventInd = 0; eventInd < SHOT_COUNT; eventInd++) {
-        //processed[evenInd] = new std::latch(config.caenCount);
-        processed[eventInd] = new std::latch(config.linkCount);
-    }
     std::cout << "armed" << std::endl;
     return true;
 }
 
 bool Crate::disarm() {
     if(!armed){
+        associatedThread.join();
         return false;
     }
 
     this->requestStop();
-    std::cout << "all joined" << std::endl;
     associatedThread.join();
+    std::cout << "all joined" << std::endl;
     return true;
 }
 
@@ -125,6 +121,7 @@ bool Crate::payload() {
         DAC1[currentEvent] = buffer.val[0];
 
         buffer.val[1] = floor(fmin(3276, fmax(0.0, neError[currentEvent]))); // limit gas puff to 4 volts
+        //buffer.val[1] = floor(fmin(3276, currentEvent * 30)); // debug
         DAC2[currentEvent] = buffer.val[1];
 
         currentEvent++;
@@ -139,6 +136,12 @@ bool Crate::payload() {
 }
 
 void Crate::beforePayload() {
+    DAC1.fill(0);
+    for(size_t eventInd = 0; eventInd < SHOT_COUNT; eventInd++) {
+        //processed[evenInd] = new std::latch(config.caenCount);
+        processed[eventInd] = new std::latch(config.linkCount);
+    }
+
     result = {};
     unsigned long long mask = 1 << 1;
     SetThreadAffinityMask(GetCurrentThread(), mask);
