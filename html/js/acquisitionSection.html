@@ -367,7 +367,7 @@
                             this.aqc_gas_evo_chart.data[0].dataPoints[this.selected].x = this.xValue;
                         }
 
-                        this.aqc_gas_evo_chart.data[0].dataPoints[this.selected].y = this.yValue;
+                        this.aqc_gas_evo_chart.data[0].dataPoints[this.selected].y = Math.max(0, this.yValue);
                         this.aqc_gas_evo_chart.render();
                     }
                 }.bind(this), 0);
@@ -382,7 +382,7 @@
                     this.aqc_gas_evo_chart.data[0].dataPoints[this.selected + 1].x >= this.xValue){
                     this.aqc_gas_evo_chart.data[0].dataPoints[this.selected].x = this.xValue;
                 }
-                this.aqc_gas_evo_chart.data[0].dataPoints[this.selected].y = this.yValue;
+                this.aqc_gas_evo_chart.data[0].dataPoints[this.selected].y = Math.max(0, this.yValue);
                 this.aqc_gas_evo_chart.render();
                 this.mouseDown = false;
             }

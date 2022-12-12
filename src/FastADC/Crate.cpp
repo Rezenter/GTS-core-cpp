@@ -114,13 +114,13 @@ bool Crate::payload() {
         }
         //ph_el = (currentEvent + 1) * 40.0 * 60;
         ph_el[currentEvent] = fmax(0.0, ph_el[currentEvent]) * 0.023; // FOR 1.6 J ONLY!!!
-        measuredNeShot[currentEvent] = ph_el[currentEvent] * 3.54e19;
-        neError[currentEvent] = (expectedNePerShot[currentEvent] - measuredNeShot[currentEvent]) * p_coeff;
+        measuredNeShot[currentEvent] = ph_el[currentEvent] * 3.54e19 * 5 / 4096;
+        neError[currentEvent] = expectedNePerShot[currentEvent] - measuredNeShot[currentEvent];
         ph_el[currentEvent] = fmin(4095, ph_el[currentEvent]);
         buffer.val[0] = floor(ph_el[currentEvent]);
         DAC1[currentEvent] = buffer.val[0];
 
-        buffer.val[1] = floor(fmin(3276, fmax(0.0, neError[currentEvent]))); // limit gas puff to 4 volts
+        buffer.val[1] = floor(fmin(3276, fmax(0.0, neError[currentEvent] * p_coeff * 4096 / 5))); // limit gas puff to 4 volts
         //buffer.val[1] = floor(fmin(3276, currentEvent * 30)); // debug
         DAC2[currentEvent] = buffer.val[1];
 
