@@ -120,7 +120,7 @@ bool Crate::payload() {
         buffer.val[0] = floor(ph_el[currentEvent]);
         DAC1[currentEvent] = buffer.val[0];
 
-        if (currentEvent >= plasmaLockIndex && plasmaLock != 0) {
+        if (currentEvent >= plasmaLockIndex && plasmaLock == 0) {
             if (measuredNeShot[currentEvent] < plasmaLockThreshold) {
                 plasmaLock = currentEvent;
             }
