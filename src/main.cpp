@@ -2,15 +2,13 @@
 // Created by ts_group on 6/28/2020.
 //
 
-#include "version.h"
-
 #include <iostream>
 #include <string>
 #include "Server/server.hpp"
 #include <filesystem>
 
 int main([[maybe_unused]] int argc,[[maybe_unused]] char* argv[]) {
-    std::cout << "TS C++ server, revision:" << REVISION << std::endl << std::flush;
+    std::cout << "TS C++ server" << std::endl << std::flush;
     std::cout << std::filesystem::current_path() << '\n' <<std::flush;
     std::cout << "Process affinity: " << ' ' << SetProcessAffinityMask(GetCurrentProcess(), 0b001111111110) << std::endl; //WINDOWS!!!
     std::cout << "process realtime: " << ' ' << SetPriorityClass(GetCurrentProcess(), REALTIME_PRIORITY_CLASS) << std::endl; //WINDOWS!!!

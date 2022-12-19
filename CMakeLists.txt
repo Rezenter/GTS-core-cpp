@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 project(GTS-core)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_EXE_LINKER_FLAGS "-static")
 set(BUILD_ARCH "-m64")
 
@@ -29,5 +29,9 @@ add_executable(GTS-core src/main.cpp version.h
         src/Server/request_parser.cpp src/Server/server.cpp)
 target_link_libraries(GTS-core ${CMAKE_CURRENT_SOURCE_DIR}/lib/CAENDigitizer.lib wsock32 ws2_32 boost_system boost_thread-mt)
 
+add_executable(SlowADC_to_sht src/SlowADC/slow2sht.cpp
 
+        src/SHT/compress.cpp
 
+        include/SHT/compress.hpp)
+target_link_libraries(SlowADC_to_sht pthread)
