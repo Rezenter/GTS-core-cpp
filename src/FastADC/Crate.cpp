@@ -120,8 +120,18 @@ bool Crate::payload() {
         buffer.val[0] = floor(ph_el[currentEvent]);
         DAC1[currentEvent] = buffer.val[0];
 
-        buffer.val[1] = floor(fmin(3276, fmax(0.0, neError[currentEvent] * p_coeff * 4096 / 5))); // limit gas puff to 4 volts
-        //buffer.val[1] = floor(fmin(3276, currentEvent * 30)); // debug
+        if (currentEvent >= plasmaLockIndex && plasmaLock != 0) {
+            if (measuredNeShot[currentEvent] < plasmaLockThreshold) {
+                plasmaLock = currentEvent;
+            }
+        }
+
+        if(neError[currentEvent] > 0 && plasmaLock == 0) {
+            buffer.val[1] = floor(fmin(3000, fmax(0.0, (valveDeadzone + neError[currentEvent] * p_coeff) * 4096 / 5))); // limit gas puff to 4 volts
+        }else{
+            buffer.val[1] = 0;
+        }
+
         DAC2[currentEvent] = buffer.val[1];
 
         currentEvent++;
@@ -158,6 +168,7 @@ void Crate::beforePayload() {
 
     buffer.val[0] = 0;
     buffer.val[1] = 0;
+    plasmaLock = 0;
     sendto(sockfd, buffer.chars, 4,
            0, (const struct sockaddr *) &servaddr,
            sizeof(servaddr));
@@ -190,7 +201,8 @@ void Crate::afterPayload() {
                                    {"DAC2",  DAC2},
                                    {"neProg",  expectedNePerShot},
                                    {"neMeas",  measuredNeShot},
-                                   {"neErr",  neError}
+                                   {"neErr",  neError},
+                                   {"plasmaLock", plasmaLock}
                                }}
                        }
             },

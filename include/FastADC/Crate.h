@@ -39,6 +39,10 @@ private:
     double neError[SHOT_COUNT];
     double ph_el[SHOT_COUNT];
     double p_coeff = 0.0;
+    const double valveDeadzone = 1.2; //[V] valve does not react to the voltage lover than this level
+    size_t plasmaLock = 0;
+    const size_t plasmaLockIndex = 40;
+    const double plasmaLockThreshold = 1e18;
 
 public:
     ~Crate() override;
