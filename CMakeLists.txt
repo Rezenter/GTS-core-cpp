@@ -20,8 +20,8 @@ include_directories(${CMAKE_SOURCE_DIR} include lib)
 
 add_executable(GTS-core src/main.cpp version.h
 
-        src/FastADC/Link.cpp src/FastADC/FastSystem.cpp
-        src/FastADC/Crate.cpp include/Stoppable.h src/FastADC/Config.cpp
+        src/FastADC/Link.cpp src/FastADC/Crate.cpp
+        include/Stoppable.h src/FastADC/Config.cpp
         src/FastADC/Storage.cpp
 
         include/Server/request.hpp include/Server/header.hpp src/Server/connection.cpp

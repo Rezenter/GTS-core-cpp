@@ -4,18 +4,18 @@
 
 #include "include/FastADC/Storage.h"
 
-Storage::Storage(Config &config) : config(config){
+Storage::Storage(Config* config) : config(config){
 
 }
 
 bool Storage::saveDischarge(const Json& data) const {
     std::stringstream path;
-    if(config.isPlasma){
-        path << config.plasmaPath << std::setw(5) << std::setfill('0') << config.plasmaShot << '/';
+    if(config->isPlasma){
+        path << config->plasmaPath << std::setw(5) << std::setfill('0') << config->plasmaShot << '/';
     }else{
-        path << config.debugPath << std::setw(5) << std::setfill('0') << config.debugShot << '/';
-        std::ofstream debugShotnFile(config.debugShotnPath);
-        debugShotnFile << (config.debugShot + 1);
+        path << config->debugPath << std::setw(5) << std::setfill('0') << config->debugShot << '/';
+        std::ofstream debugShotnFile(config->debugShotnPath);
+        debugShotnFile << (config->debugShot + 1);
         debugShotnFile.close();
     }
     std::string pathStr = path.str();
@@ -40,28 +40,28 @@ bool Storage::saveDischarge(const Json& data) const {
 }
 
 bool Storage::isAlive() const {
-    if(!std::filesystem::is_directory(config.plasmaPath)){
-        std::cout << "Directory" << config.plasmaPath << "for plasma shots not found." << std::endl;
+    if(!std::filesystem::is_directory(config->plasmaPath)){
+        std::cout << "Directory" << config->plasmaPath << "for plasma shots not found." << std::endl;
         return false;
     }
-    if(!std::filesystem::is_directory(config.debugPath)){
-        std::cout << "Directory" << config.debugPath << "for debug shots not found." << std::endl;
+    if(!std::filesystem::is_directory(config->debugPath)){
+        std::cout << "Directory" << config->debugPath << "for debug shots not found." << std::endl;
         return false;
     }
-    if(!std::filesystem::is_regular_file(config.plasmaShotnPath)){
-        std::cout << "File" << config.plasmaShotnPath << "for plasma shotn not found." << std::endl;
+    if(!std::filesystem::is_regular_file(config->plasmaShotnPath)){
+        std::cout << "File" << config->plasmaShotnPath << "for plasma shotn not found." << std::endl;
         return false;
     }
-    if(!std::filesystem::is_regular_file(config.debugShotnPath)){
-        std::cout << "File" << config.debugShotnPath << "for debug shotn not found." << std::endl;
+    if(!std::filesystem::is_regular_file(config->debugShotnPath)){
+        std::cout << "File" << config->debugShotnPath << "for debug shotn not found." << std::endl;
         return false;
     }
-    std::ifstream plasmaShotnFile(config.plasmaShotnPath);
-    plasmaShotnFile >> config.plasmaShot;
+    std::ifstream plasmaShotnFile(config->plasmaShotnPath);
+    plasmaShotnFile >> config->plasmaShot;
     plasmaShotnFile.close();
 
-    std::ifstream debugShotnFile(config.debugShotnPath);
-    debugShotnFile >> config.debugShot;
+    std::ifstream debugShotnFile(config->debugShotnPath);
+    debugShotnFile >> config->debugShot;
     debugShotnFile.close();
     return true;
 }
@@ -72,21 +72,21 @@ Json Storage::getConfigsNames() {
     //get configs
     res["configs"] = Json::array();
     std::string filename;
-    for (const auto & entry : std::filesystem::directory_iterator(config.configsPath)) {
+    for (const auto & entry : std::filesystem::directory_iterator(config->configsPath)) {
         filename = entry.path().filename().string();
         res["configs"].push_back(filename.substr(0, filename.find_last_of('.')));
     }
 
     //get spectral
     res["spectral"] = Json::array();
-    for (const auto & entry : std::filesystem::directory_iterator(config.spectralPath)) {
+    for (const auto & entry : std::filesystem::directory_iterator(config->spectralPath)) {
         filename = entry.path().filename().string();
         res["spectral"].push_back(filename.substr(0, filename.find_last_of('.')));
     }
 
     //get abs
     res["abs"] = Json::array();
-    for (const auto & entry : std::filesystem::directory_iterator(config.absPath)) {
+    for (const auto & entry : std::filesystem::directory_iterator(config->absPath)) {
         filename = entry.path().filename().string();
         res["abs"].push_back(filename.substr(0, filename.find_last_of('.')));
     }
@@ -94,7 +94,7 @@ Json Storage::getConfigsNames() {
 
     //get gas
     res["gas"] = Json::array();
-    for (const auto & entry : std::filesystem::directory_iterator(config.gasPath)) {
+    for (const auto & entry : std::filesystem::directory_iterator(config->gasPath)) {
         filename = entry.path().filename().string();
         res["gas"].push_back(filename.substr(0, filename.find_last_of('.')));
     }
@@ -104,7 +104,7 @@ Json Storage::getConfigsNames() {
 Json Storage::getGas(const std::string& name) {
     Json res = {};
 
-    std::filesystem::path path = config.gasPath + name + ".json";
+    std::filesystem::path path = config->gasPath + name + ".json";
     if(!std::filesystem::is_regular_file(path)){
         res["ok"] = false;
         res["err"] = "no such file " + path.string();
@@ -121,7 +121,7 @@ Json Storage::getGas(const std::string& name) {
 }
 
 bool Storage::saveGas(const std::string &name, const Json& prog) {
-    std::filesystem::path path = config.gasPath + name + ".json";
+    std::filesystem::path path = config->gasPath + name + ".json";
     if(std::filesystem::is_regular_file(path)){
         return false;
     }

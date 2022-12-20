@@ -9,7 +9,12 @@
 //debug
 
 
-Crate::Crate(Config &config, Storage& storage) : config(config), storage(storage) {
+Crate::Crate(){
+    if(!this->config.load()){
+        std::cout << "something went wrong during loading config." << std::endl;
+    }
+    std::cout << "Voltage range: [" << this->config.offset - 1250 << ", " << this->config.offset + 1250 << "] mv." << std::endl;
+    this->storage = Storage(&this->config);
     init();
 }
 
@@ -20,8 +25,88 @@ Crate::~Crate(){
     }
 }
 
+Json Crate::requestHandler(Json req){
+    Json resp = {{"ok", true}};
+    if(req.contains("reqtype")){
+        if(req.at("reqtype") == "reboot"){
+
+            resp["ok"] = false;
+            resp["err"] = "Not implemented!";
+
+        }else
+        if(req.at("reqtype") == "arm"){
+            if(!isAlive()){
+                resp["ok"] = false;
+                resp["err"] = "Fast system is dead.";
+            }else {
+                if (req.contains("header")) {
+                    config.aux_args = req["header"];
+                } else {
+                    config.aux_args = {};
+                }
+                if (req.contains("is_plasma")) {
+                    config.isPlasma = req.at("is_plasma");
+                }else{
+                    config.isPlasma = false;
+                }
+                if (!this->arm()) {
+                    resp["ok"] = false;
+                    resp["err"] = "internal fail";
+                }
+            }
+        }else
+        if(req.at("reqtype") == "disarm"){
+            if(!this->isAlive()){
+                resp["ok"] = false;
+                resp["err"] = "system is dead!";
+            }else{
+                if(!this->disarm()){
+                    resp["ok"] = false;
+                    resp["err"] = "internal fail";
+                }
+            }
+        }else
+        if(req.at("reqtype") == "state"){
+            resp["CAENS"] = {
+                    {"alive", this->isAlive()},
+                    {"armed", this->armed},
+                    {"saving", this->saving},
+                    {"saved", this->saved},
+                    {"recordedPulses", this->currentEvent},
+                    {"connectedCount", this->connectedCount},
+                    {"boardCount", this->boardCount}
+            };
+
+            if(resp["CAENS"]["alive"]) {
+                resp["plasma_shotn"] = this->config.plasmaShot;
+                resp["debug_shotn"] = this->config.debugShot;
+            }else{
+                resp["plasma_shotn"] = 99999;
+                resp["debug_shotn"] = 99999;
+            }
+        }else
+        if(req.at("reqtype") == "configs"){
+            resp["data"] = this->storage.getConfigsNames();
+        }else
+        if(req.at("reqtype") == "getGas"){
+            return this->storage.getGas(req.at("name"));
+        }else
+        if(req.at("reqtype") == "saveGas"){
+            resp["ok"] = this->storage.saveGas(req.at("name"), req.at("prog"));
+            return resp;
+        }
+    }else{
+        resp["ok"] = false;
+        resp["err"] = "reqtype is not listed";
+    }
+    return resp;
+}
+
 bool Crate::init() {
     armed = false;
+    connectedCount = 0;
+    boardCount = config.linkCount;
+    saving = false;
     for(unsigned int link = 0; link < config.linkCount; link++){
         std::cout << link << std::endl;
         links[link] = new Link(config.links[link], processed);
@@ -30,12 +115,15 @@ bool Crate::init() {
             std::cout << "board " << link << " not initialised!" << std::endl;
             return false;
         }
+        connectedCount++;
     }
+    std::cout << "Fast digitizers initialised!" << std::endl;
+    saved = true;
     return true;
 }
 
 bool Crate::arm() {
-    if(armed){
+    if(!saved){
         return false;
     }
 
@@ -60,7 +148,7 @@ bool Crate::arm() {
     const float laserPeriod = 3.127;  // [ms] (increase frequency on 10Hz)
     size_t current_ind = 0;
     for(size_t eventInd = 1; eventInd < SHOT_COUNT; eventInd++) {
-        float time = firstShotTime + (eventInd - 1) * laserPeriod;
+        float time = firstShotTime + (float)(eventInd - 1) * laserPeriod;
         while(current_ind < prog["data"]["desired_ne"].size() && prog["data"]["desired_ne"][current_ind]["time"] < time){
             current_ind ++;
         }
@@ -78,6 +166,8 @@ bool Crate::arm() {
         }
     }
     armed = true;
+    saving = false;
+    saved = false;
     associatedThread = std::thread([&](){
         run();
     });
@@ -98,6 +188,13 @@ bool Crate::disarm() {
 }
 
 bool Crate::isAlive() {
+    if(joinMe){
+        associatedThread.join();
+        joinMe = false;
+    }
+    if(!storage.isAlive()){
+        return false;
+    }
     for(unsigned int count = 0; count < config.linkCount; count++){
         if(!links[count]->isAlive()){
             std::cout << "board " << count << " dead!" << std::endl;
@@ -187,6 +284,8 @@ void Crate::afterPayload() {
     //close socket
     closesocket(sockfd);
 
+    armed = false;
+    saving = true;
     result = {
             {"header", {
                                {"version", 4},
@@ -228,5 +327,8 @@ void Crate::afterPayload() {
     }
 
     storage.saveDischarge(result);
-    armed = false;
+
+    saving = false;
+    saved = true;
+    joinMe = true;
 }

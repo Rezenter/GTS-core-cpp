@@ -35,6 +35,7 @@
     </div>
     <hr>
     <div class="container-fluid">
+        <p>Electron density feedback control</p>
         <div class="row">
             <label for="gas_select">N<sub>e</sub> program:</label><select id="gas_select" class="gas_programs"></select>
             <button class="btn btn-danger" id="gas_edit">Edit</button>
@@ -53,7 +54,7 @@
 <script>
     function Main () {
         this.m_status_timer = null;
-        this.last_update = 0;
+        this.state = null;
         this.aqc_configs = null;
 
         this.xSnapDistance = 3;
@@ -136,8 +137,16 @@
         });
         this.aqc_gas_evo_chart.render();
 
+        this.selectors = {
+            ADC_state: $('#ADC_state'),
+            arm_button: $('#ADC_arm_button'),
+            disarm_button: $('#ADC_disarm_button'),
+            next_shotn: $('#next_shot_number'),
+            isPlasma_checkbox: $('#is_plasma')[0]
+        };
+
         this.setTimer = function(){
-            let delay = 1000;
+            let delay = 500;
             this.m_status_timer = setTimeout(function request() {
                 this.ADCState();
                 //if (ошибка запроса из-за перегрузки сервера) {
@@ -145,12 +154,57 @@
                 //  delay *= 2;
                 //}
                 this.m_status_timer = setTimeout(request.bind(this), delay);
-
+                this.DisplayState();
             }.bind(this), delay);
         }
 
         this.Request = function (req, callback) {
             $.post('/api', JSON.stringify(req), callback, 'json');
+        };
+
+        this.DisplayState = function(){
+            if(this.state.CAENS.boardCount === 0 || this.state.CAENS.boardCount !== this.state.CAENS.connectedCount){
+                this.selectors.ADC_state.css('background-color','red');
+                this.selectors.ADC_state.html('Connected ' + this.state.CAENS.connectedCount + ' of ' + this.state.CAENS.boardCount + ' links. ' + ((this.state.unix - 1e-3 * Date.now())).toFixed(0) + ' (s)');
+
+                this.selectors.arm_button.prop("disabled", true);
+                this.selectors.disarm_button.prop( "disabled", true);
+            }else{
+                if(this.state.CAENS.armed){
+                    this.selectors.arm_button.prop("disabled", true);
+                    this.selectors.disarm_button.prop( "disabled", false);
+                    if(this.state.CAENS.recordedPulses === 0){
+                        this.selectors.ADC_state.css('background-color','green');
+                        this.selectors.ADC_state.html('Armed ' + ((this.state.unix - 1e-3 * Date.now())).toFixed(0) + ' (s)');
+
+                    }else{
+                        this.selectors.ADC_state.css('background-color','yellow');
+                        this.selectors.ADC_state.html('Armed, recorded ' + this.state.CAENS.recordedPulses + ' pulses. ' + ((this.state.unix - 1e-3 * Date.now())).toFixed(0) + ' (s)');
+                    }
+                }else{
+                    if(this.state.CAENS.saving){
+                        this.selectors.ADC_state.css('background-color','blue');
+                        this.selectors.ADC_state.html('Writing files... ' + ((this.state.unix - 1e-3 * Date.now())).toFixed(0) + ' (s)');
+                        this.selectors.arm_button.prop("disabled", true);
+                        this.selectors.disarm_button.prop( "disabled", true);
+                    }else if(this.state.CAENS.saved){
+                        this.selectors.ADC_state.css('background-color', 'white');
+                        this.selectors.ADC_state.html('Ready ' + ((this.state.unix - 1e-3 * Date.now())).toFixed(0) + ' (s)');
+                        this.selectors.arm_button.prop("disabled", false);
+                        this.selectors.disarm_button.prop("disabled", true);
+                    }else{
+                        this.selectors.ADC_state.css('background-color', 'red');
+                        this.selectors.ADC_state.html('WTF??? ' + ((this.state.unix - 1e-3 * Date.now())).toFixed(0) + ' (s)');
+                        this.selectors.arm_button.prop("disabled", true);
+                        this.selectors.disarm_button.prop("disabled", false);
+                    }
+                }
+            }
+            if(this.selectors.isPlasma_checkbox.checked){
+                this.selectors.next_shotn.val(this.state.plasma_shotn);
+            }else{
+                this.selectors.next_shotn.val(this.state.debug_shotn);
+            }
         };
 
         //ADC
@@ -217,32 +271,9 @@
                         console.log(resp);
                         alert(resp.err);
                     }else{
-                        this.last_update = resp.unix;
-                        if(resp.alive){
-                            if(resp.armed){
-                                $('#ADC_state').css('background-color','green');
-                                $('#ADC_state').html('Armed ' + ((this.last_update - 1e-3 * Date.now())).toFixed(0) + ' (s)');
-                                $('#ADC_arm_button').prop("disabled", true);
-                                $('#ADC_disarm_button').prop( "disabled", false);
-                            }else {
-                                $('#ADC_state').css('background-color', 'white');
-                                $('#ADC_state').html('Ready ' + ((this.last_update - 1e-3 * Date.now())).toFixed(0) + ' (s)');
-                                $('#ADC_arm_button').prop("disabled", false);
-                                $('#ADC_disarm_button').prop("disabled", true);
-                            }
-                        }else{
-                            $('#ADC_state').css('background-color','red');
-                            $('#ADC_state').html('Not connected ' + ((this.last_update - 1e-3 * Date.now())).toFixed(0) + ' (s)');
-
-                            //disable buttons!
-                        }
-                        if($('#is_plasma')[0].checked){
-                            $('#next_shot_number').val(resp.plasma_shotn);
-                        }else{
-                            $('#next_shot_number').val(resp.debug_shotn);
-                        }
+                        this.state = resp;
                     }
-                }
+                }.bind(this)
             );
         };
 

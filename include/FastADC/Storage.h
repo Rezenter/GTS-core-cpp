@@ -21,10 +21,11 @@ using Json = nlohmann::json;
 
 class Storage {
 private:
-    Config& config;
+    Config* config;
 
 public:
-    explicit Storage(Config& config);
+    Storage(){};
+    explicit Storage(Config* config);
 
     bool saveDischarge(const Json& data) const;
     [[nodiscard]] bool isAlive() const;

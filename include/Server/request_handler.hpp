@@ -13,7 +13,7 @@
 
 #include <string>
 #include <boost/noncopyable.hpp>
-#include "include/FastADC/FastSystem.h"
+#include "include/FastADC/Crate.h"
 
 namespace http::server3 {
     struct reply;
@@ -30,7 +30,7 @@ namespace http::server3 {
         void handle_request(const request &req, reply &rep);
 
     private:
-        FastSystem fastSystem;
+        Crate crate;
         /// The directory containing the files to be served.
         std::string doc_root_;
 
