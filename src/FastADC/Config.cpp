@@ -139,21 +139,6 @@ bool Config::load(std::string path) {
             flag = false;
             std::cout << "Config file missing '" << key << "', using default." << std::endl;
         }
-
-        key = "triggerThreshold";
-        if(section.contains(key)){
-            float candidate = section[key];
-            if(-1250 + offset <= candidate && candidate <= 1250 + offset){
-                triggerThreshold = candidate;
-                //triggerThresholdADC = (1250 + offset - triggerThreshold) * 0xFFFF / 2500;
-            }else{
-                flag = false;
-                std::cout << "Wrong value for '" << key << "' = " << candidate << '.' << std::endl;
-            }
-        }else{
-            flag = false;
-            std::cout << "Config file missing '" << key << "', using default." << std::endl;
-        }
     }else{
         flag = false;
         std::cout << "Config file missing '" << key << "' section, using defaults." << std::endl;
@@ -209,6 +194,62 @@ bool Config::load(std::string path) {
             std::string candidate = section[key];
             if(std::filesystem::exists(candidate)){
                 debugShotnPath = candidate;
+            }else{
+                flag = false;
+                std::cout << "Wrong value for '" << key << "' = " << candidate << '.' << std::endl;
+            }
+        }else{
+            flag = false;
+            std::cout << "Config file missing '" << key << "', using default." << std::endl;
+        }
+
+        key = "gasPath";
+        if(section.contains(key)){
+            std::string candidate = section[key];
+            if(std::filesystem::exists(candidate)){
+                gasPath = candidate;
+            }else{
+                flag = false;
+                std::cout << "Wrong value for '" << key << "' = " << candidate << '.' << std::endl;
+            }
+        }else{
+            flag = false;
+            std::cout << "Config file missing '" << key << "', using default." << std::endl;
+        }
+
+        key = "configsPath";
+        if(section.contains(key)){
+            std::string candidate = section[key];
+            if(std::filesystem::exists(candidate)){
+                configsPath = candidate;
+            }else{
+                flag = false;
+                std::cout << "Wrong value for '" << key << "' = " << candidate << '.' << std::endl;
+            }
+        }else{
+            flag = false;
+            std::cout << "Config file missing '" << key << "', using default." << std::endl;
+        }
+
+        key = "spectralPath";
+        if(section.contains(key)){
+            std::string candidate = section[key];
+            if(std::filesystem::exists(candidate)){
+                spectralPath = candidate;
+            }else{
+                flag = false;
+                std::cout << "Wrong value for '" << key << "' = " << candidate << '.' << std::endl;
+            }
+        }else{
+            flag = false;
+            std::cout << "Config file missing '" << key << "', using default." << std::endl;
+        }
+
+        key = "absPath";
+        if(section.contains(key)){
+            std::string candidate = section[key];
+            if(std::filesystem::exists(candidate)){
+                absPath = candidate;
             }else{
                 flag = false;
                 std::cout << "Wrong value for '" << key << "' = " << candidate << '.' << std::endl;

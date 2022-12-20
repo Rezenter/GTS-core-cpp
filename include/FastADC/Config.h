@@ -37,7 +37,6 @@ public:
     unsigned int recordLength = 1024;
     unsigned int triggerDelay = 18; // *16 cells
     float offset = 1100.0; // mv
-    float triggerThreshold = 300.0; // mv
     uint16_t offsetADC = 0x7FFF;
 
     //storage
@@ -50,7 +49,7 @@ public:
     std::string spectralPath = "d:/data/db/calibration/expected/";
     std::string absPath = "d:/data/db/calibration/abs/processed/";
 
-    bool load(std::string path = "d:/data/db/config_debug.json");
+    bool load(std::string path = "d:/data/db/config_cpp.json");
 };
 
 
