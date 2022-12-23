@@ -4,7 +4,7 @@
 
 #include <iostream>
 #include <string>
-#include "SHT/compress.hpp"
+#include "SlowADC/compress.hpp"
 #include <fstream>
 #include <filesystem>
 #include "json.hpp"
@@ -33,7 +33,7 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char* argv[]) {
         std::filesystem::path binary_path(binary_foldername);
         binary_path.append("sht" + std::to_string(shotn));
         //check path for all 4 files
-        //std::cout << binary_path << std::endl;
+        std::cout << binary_path << ' ' << outFilename << std::endl;
 
 
         Out out = packADC(binary_path, config);

@@ -1,0 +1,2 @@
+gas puff improvements:
+valve deadzone and plasmaLock

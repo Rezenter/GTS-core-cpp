@@ -252,7 +252,7 @@ void Crate::beforePayload() {
     result = {};
     unsigned long long mask = 1 << 1;
     SetThreadAffinityMask(GetCurrentThread(), mask);
-    std::cout << "Crate thread: " << SetThreadAffinityMask(GetCurrentThread(), mask) << std::endl;
+    std::cout << "SlowSubsystem thread: " << SetThreadAffinityMask(GetCurrentThread(), mask) << std::endl;
     currentEvent = 0;
     //open socket
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);

@@ -45,6 +45,8 @@ namespace http::server3 {
                     Json resp;
                     if(payload.at("subsystem") == "ADC"){
                         resp = crate.requestHandler(payload);
+                    }else if(payload.at("subsystem") == "slowADC"){
+                        resp = slowSubsystem.requestHandler(payload);
                     }
                     resp["unix"] = std::chrono::duration_cast<std::chrono::seconds>(
                             std::chrono::system_clock::now().time_since_epoch()).count();

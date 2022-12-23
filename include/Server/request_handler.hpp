@@ -14,6 +14,7 @@
 #include <string>
 #include <boost/noncopyable.hpp>
 #include "include/FastADC/Crate.h"
+#include "include/SlowADC/SlowSubsystem.h"
 
 namespace http::server3 {
     struct reply;
@@ -31,6 +32,7 @@ namespace http::server3 {
 
     private:
         Crate crate;
+        SlowSubsystem slowSubsystem;
         /// The directory containing the files to be served.
         std::string doc_root_;
 
