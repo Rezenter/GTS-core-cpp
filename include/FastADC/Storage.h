@@ -5,7 +5,7 @@
 #ifndef CAEN743_STORAGE_H
 #define CAEN743_STORAGE_H
 
-#include "Config.h"
+#include "FastConfig.h"
 #include "json.hpp"
 #include <io.h>
 #include <iomanip>
@@ -21,11 +21,11 @@ using Json = nlohmann::json;
 
 class Storage {
 private:
-    Config* config;
+    FastConfig* config;
 
 public:
     Storage(){};
-    explicit Storage(Config* config);
+    explicit Storage(FastConfig* config);
 
     bool saveDischarge(const Json& data) const;
     [[nodiscard]] bool isAlive() const;

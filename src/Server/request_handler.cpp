@@ -10,6 +10,7 @@
 
 #include "Server/request_handler.hpp"
 #include <sstream>
+#include <fstream>
 #include <string>
 #include <boost/lexical_cast.hpp>
 #include "Server/mime_types.hpp"
@@ -20,8 +21,8 @@
 
 using Json = nlohmann::json;
 namespace http::server3 {
-    request_handler::request_handler(const std::string &doc_root)
-            : doc_root_(doc_root) {}
+    request_handler::request_handler(const std::string &doc_root, std::function<Json(Json)> outerHandler)
+            : doc_root_(doc_root), outerHandler(outerHandler) {}
 
     void request_handler::handle_request(const request &req, reply &rep) {
         // Decode url to path.
@@ -42,12 +43,7 @@ namespace http::server3 {
             try{
                 Json payload = Json::parse(req.payload);
                 if(payload.contains("subsystem")){
-                    Json resp;
-                    if(payload.at("subsystem") == "ADC"){
-                        resp = crate.requestHandler(payload);
-                    }else if(payload.at("subsystem") == "slowADC"){
-                        resp = slowSubsystem.requestHandler(payload);
-                    }
+                    Json resp = outerHandler(payload);
                     resp["unix"] = std::chrono::duration_cast<std::chrono::seconds>(
                             std::chrono::system_clock::now().time_since_epoch()).count();
                     rep = reply::api_reply(to_string(resp));

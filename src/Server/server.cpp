@@ -17,12 +17,12 @@
 namespace http::server3 {
 
         server::server(const std::string& address, const std::string& port,
-                       const std::string& doc_root, std::size_t thread_pool_size)
+                       const std::string& doc_root, std::size_t thread_pool_size, std::function<Json(Json)> outerHandler)
                 : thread_pool_size_(thread_pool_size),
                   signals_(io_context_),
                   acceptor_(io_context_),
                   new_connection_(),
-                  request_handler_(doc_root)
+                  request_handler_(doc_root, outerHandler)
         {
             // Register to handle the signals that indicate when the server should exit.
             // It is safe to register for the same signal multiple times in a program,
@@ -58,8 +58,8 @@ namespace http::server3 {
             }
 
             // Wait for all threads in the pool to exit.
-            for (std::size_t i = 0; i < threads.size(); ++i)
-                threads[i]->join();
+            for (auto & thread : threads)
+                thread->join();
         }
 
         void server::start_accept()

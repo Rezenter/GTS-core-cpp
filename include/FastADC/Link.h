@@ -5,7 +5,7 @@
 #define LINK_H
 
 #include "CAENDigitizer.h"
-#include "Config.h"
+#include "FastConfig.h"
 #include "Stoppable.h"
 #include <vector>
 #include <array>
@@ -65,7 +65,7 @@ private:
             {520, 670}
     };
 
-    Config* config;
+    FastConfig* config;
     int link; //optical link number
 
     CAEN_DGTZ_ErrorCode ret;
@@ -88,7 +88,7 @@ public:
     explicit Link(unsigned short link, std::array<std::latch*, SHOT_COUNT>& processed) : link(link), processed(processed){};
     ~Link() override;
     bool isAlive();
-    int init(Config& config);
+    int init(FastConfig& config);
     bool arm();
     bool disarm();
     int serials[2] = {0, 0};

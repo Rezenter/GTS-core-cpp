@@ -7,7 +7,7 @@
 
 #include "Link.h"
 
-#include "Config.h"
+#include "FastConfig.h"
 #include "Storage.h"
 
 union Buffer{
@@ -18,7 +18,7 @@ union Buffer{
 class Crate : public Stoppable{
 private:
     Buffer buffer;
-    Config config;
+    FastConfig config;
     Storage storage;
     Link* links[MAX_LINKS];
 

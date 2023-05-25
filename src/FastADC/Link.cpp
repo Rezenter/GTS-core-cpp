@@ -8,7 +8,7 @@
 
 #include "include/FastADC/Link.h"
 
-int Link::init(Config& config){
+int Link::init(FastConfig& config){
     this->config = &config;
 
     for(int node = 0; node < 2; node++) {

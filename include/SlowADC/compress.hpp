@@ -115,7 +115,7 @@ static CombiscopeHistogram header = {
         0,//t_min
         1.0,//tMax
         0,//baseline shift
-        10.0 / 65536.0//delta DAC to VOlt
+        20.0 / 65536.0//delta DAC to VOlt
 };
 
 template <typename TP> std::time_t to_time_t(TP tp){

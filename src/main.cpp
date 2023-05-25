@@ -3,8 +3,7 @@
 //
 
 #include <iostream>
-#include <string>
-#include "Server/server.hpp"
+#include "Diag/Diag.h"
 #include <filesystem>
 
 int main([[maybe_unused]] int argc,[[maybe_unused]] char* argv[]) {
@@ -16,13 +15,8 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char* argv[]) {
     unsigned long long mask = 0b001111000000;
     SetThreadAffinityMask(GetCurrentThread(), mask); //WINDOWS!!!
     std::cout << "Main thread: " << ' ' << SetThreadAffinityMask(GetCurrentThread(), mask) << std::endl; //WINDOWS!!!
-    try{
-        http::server3::server s("172.16.12.130", "8080", "../html/", 4); // 4 = num_threads
-        s.run();
-    }
-    catch (std::exception& e){
-        std::cerr << "exception: " << e.what() << "\n";
-    }
+
+    Diag();
 
     std::cout << "\nNormal exit." << std::endl << std::flush;
     return 0;

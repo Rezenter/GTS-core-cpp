@@ -13,8 +13,11 @@
 
 #include <string>
 #include <boost/noncopyable.hpp>
-#include "include/FastADC/Crate.h"
-#include "include/SlowADC/SlowSubsystem.h"
+#include <functional>
+
+#include "json.hpp"
+using Json = nlohmann::json;
+
 
 namespace http::server3 {
     struct reply;
@@ -25,16 +28,15 @@ namespace http::server3 {
             : private boost::noncopyable {
     public:
         /// Construct with a directory containing files to be served.
-        explicit request_handler(const std::string &doc_root);
+        explicit request_handler(const std::string &doc_root, std::function<Json(Json)> requestHandler);
 
         /// Handle a request and produce a reply.
         void handle_request(const request &req, reply &rep);
 
     private:
-        Crate crate;
-        SlowSubsystem slowSubsystem;
         /// The directory containing the files to be served.
         std::string doc_root_;
+        std::function<Json(Json)> outerHandler;
 
         /// Perform URL-decoding on a string. Returns false if the encoding was
         /// invalid.

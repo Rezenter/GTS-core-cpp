@@ -4,7 +4,7 @@
 
 #include "include/FastADC/Storage.h"
 
-Storage::Storage(Config* config) : config(config){
+Storage::Storage(FastConfig* config) : config(config){
 
 }
 

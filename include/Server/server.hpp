@@ -18,9 +18,12 @@
 #include <boost/shared_ptr.hpp>
 #include "Server/connection.hpp"
 #include "Server/request_handler.hpp"
+#include "json.hpp"
+#include <functional>
 
-namespace http {
-    namespace server3 {
+using Json = nlohmann::json;
+
+namespace http::server3 {
 
 /// The top-level class of the HTTP server.
         class server
@@ -30,7 +33,7 @@ namespace http {
             /// Construct the server to listen on the specified TCP address and port, and
             /// serve up files from the given directory.
             explicit server(const std::string& address, const std::string& port,
-                            const std::string& doc_root, std::size_t thread_pool_size);
+                            const std::string& doc_root, std::size_t thread_pool_size, std::function<Json(Json)> outerHandler);
 
             /// Run the server's io_context loop.
             void run();
@@ -64,7 +67,6 @@ namespace http {
             request_handler request_handler_;
         };
 
-    } // namespace server3
-} // namespace http
+    } // namespace http
 
 #endif // HTTP_SERVER3_SERVER_HPP

@@ -12,7 +12,7 @@ endif()
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-Ofast")
 
-SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${BUILD_ARCH} -Wall -Wextra" )
+SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${BUILD_ARCH} -Wall -Wextra -mcmodel=small" )
 SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${BUILD_ARCH}")
 
 include_directories(${CMAKE_SOURCE_DIR} include lib)
@@ -21,8 +21,10 @@ include_directories(${CMAKE_SOURCE_DIR} include lib)
 add_executable(GTS-core src/main.cpp version.h
         include/json.hpp
 
+        src/Diag/Diag.cpp src/Diag/Config.cpp
+
         src/FastADC/Link.cpp src/FastADC/Crate.cpp include/FastADC/Crate.h
-        include/Stoppable.h src/FastADC/Config.cpp
+        include/Stoppable.h src/FastADC/FastConfig.cpp
         src/FastADC/Storage.cpp
 
         include/Server/request.hpp include/Server/header.hpp src/Server/connection.cpp

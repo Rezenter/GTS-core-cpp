@@ -2,11 +2,11 @@
 // Created by ts_group on 6/28/2020.
 //
 
-#include "include/FastADC/Config.h"
+#include "include/FastADC/FastConfig.h"
 
 #include "iostream"
 
-bool Config::load(std::string path) {
+bool FastConfig::load(std::string path) {
     if(!std::filesystem::exists(path)){
         return false;
     }
@@ -266,7 +266,7 @@ bool Config::load(std::string path) {
     return flag;
 }
 
-std::string Config::freqStr() const {
+std::string FastConfig::freqStr() const {
     switch (frequency) {
         case CAEN_DGTZ_SAM_3_2GHz:
             return "3.2";

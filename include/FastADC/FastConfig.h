@@ -16,7 +16,7 @@
 
 using Json = nlohmann::json;
 
-class Config {
+class FastConfig {
 private:
 
 public:
