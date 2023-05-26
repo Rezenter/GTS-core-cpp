@@ -7,7 +7,6 @@
 
 #include "json.hpp"
 
-
 using Json = nlohmann::json;
 
 class Diag;

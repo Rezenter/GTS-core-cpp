@@ -17,15 +17,15 @@
 Json Storage::getConfigsNames() {
     Json res = {};
 
-    /*
     //get configs
     res["configs"] = Json::array();
     std::string filename;
-    for (const auto & entry : std::filesystem::directory_iterator(config->configsPath)) {
+    for (const auto & entry : std::filesystem::directory_iterator(parent.config.configsPath)) {
         filename = entry.path().filename().string();
         res["configs"].push_back(filename.substr(0, filename.find_last_of('.')));
     }
 
+    /*
     //get spectral
     res["spectral"] = Json::array();
     for (const auto & entry : std::filesystem::directory_iterator(config->spectralPath)) {

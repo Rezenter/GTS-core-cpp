@@ -9,7 +9,7 @@
 
 //subsystems
 #include "include/Diag/Config.h"
-//#include "include/Diag/Storage.h"
+#include "include/Diag/Storage.h"
 //#include "include/FastADC/Crate.h"
 //#include "include/SlowADC/SlowSubsystem.h"
 
@@ -23,12 +23,12 @@ private:
 
 public:
     Config config;
-    //Storage storage;
+    Storage storage;
 
     Diag();
     ~Diag();
 
-    static Json APIRequestHandler(Json req);
+    Json APIRequestHandler(Json req);
 };
 
 #endif //DIAG_H
