@@ -13,10 +13,10 @@ private:
 
 
 public:
-    std::string defaultIP = "172.16.12.130";
-    std::string defaultPort = "80";
-    std::string defaultHTMLRoot = "../html/";
-    unsigned int defaultServerTheadCount = 4;
+    std::string IP = "172.16.12.130";
+    std::string Port = "80";
+    std::string HTMLRoot = "../html/";
+    unsigned int ServerTheadCount = 4;
 
     //FastConfig fastConfig;
 };

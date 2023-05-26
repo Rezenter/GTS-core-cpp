@@ -14,7 +14,7 @@ Crate::Crate(){
         std::cout << "something went wrong during loading config." << std::endl;
     }
     std::cout << "Voltage range: [" << this->config.offset - 1250 << ", " << this->config.offset + 1250 << "] mv." << std::endl;
-    this->storage = Storage(&this->config);
+    this->storage = Storage_old(&this->config);
     init();
 }
 

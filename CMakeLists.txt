@@ -21,7 +21,7 @@ include_directories(${CMAKE_SOURCE_DIR} include lib)
 add_executable(GTS-core src/main.cpp version.h
         include/json.hpp
 
-        src/Diag/Diag.cpp src/Diag/Config.cpp
+        src/Diag/Diag.cpp src/Diag/Config.cpp src/Diag/Storage.cpp
 
         src/FastADC/Link.cpp src/FastADC/Crate.cpp include/FastADC/Crate.h
         include/Stoppable.h src/FastADC/FastConfig.cpp

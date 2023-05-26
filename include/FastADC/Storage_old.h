@@ -19,13 +19,13 @@
 
 using Json = nlohmann::json;
 
-class Storage {
+class Storage_old {
 private:
     FastConfig* config;
 
 public:
-    Storage(){};
-    explicit Storage(FastConfig* config);
+    Storage_old(){};
+    explicit Storage_old(FastConfig* config);
 
     bool saveDischarge(const Json& data) const;
     [[nodiscard]] bool isAlive() const;

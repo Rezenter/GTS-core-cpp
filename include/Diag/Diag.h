@@ -2,13 +2,14 @@
 // Created by ts_group on 23.12.2022.
 //
 
-#ifndef GTS_CORE_DIAG_H
-#define GTS_CORE_DIAG_H
+#ifndef DIAG_H
+#define DIAG_H
 //in-out
 #include "Server/server.hpp"
 
 //subsystems
 #include "include/Diag/Config.h"
+//#include "include/Diag/Storage.h"
 //#include "include/FastADC/Crate.h"
 //#include "include/SlowADC/SlowSubsystem.h"
 
@@ -22,12 +23,12 @@ private:
 
 public:
     Config config;
+    //Storage storage;
 
     Diag();
     ~Diag();
 
-
     static Json APIRequestHandler(Json req);
 };
 
-#endif //GTS_CORE_DIAG_H
+#endif //DIAG_H

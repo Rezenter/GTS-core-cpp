@@ -2,13 +2,13 @@
 // Created by ts_group on 09.07.2020.
 //
 
-#include "include/FastADC/Storage.h"
+#include "include/FastADC/Storage_old.h"
 
-Storage::Storage(FastConfig* config) : config(config){
+Storage_old::Storage_old(FastConfig* config) : config(config){
 
 }
 
-bool Storage::saveDischarge(const Json& data) const {
+bool Storage_old::saveDischarge(const Json& data) const {
     std::stringstream path;
     if(config->isPlasma){
         path << config->plasmaPath << std::setw(5) << std::setfill('0') << config->plasmaShot << '/';
@@ -39,7 +39,7 @@ bool Storage::saveDischarge(const Json& data) const {
     return true;
 }
 
-bool Storage::isAlive() const {
+bool Storage_old::isAlive() const {
     if(!std::filesystem::is_directory(config->plasmaPath)){
         std::cout << "Directory" << config->plasmaPath << "for plasma shots not found." << std::endl;
         return false;
@@ -66,7 +66,7 @@ bool Storage::isAlive() const {
     return true;
 }
 
-Json Storage::getConfigsNames() {
+Json Storage_old::getConfigsNames() {
     Json res = {};
 
     //get configs
@@ -101,7 +101,7 @@ Json Storage::getConfigsNames() {
     return res;
 }
 
-Json Storage::getGas(const std::string& name) {
+Json Storage_old::getGas(const std::string& name) {
     Json res = {};
 
     std::filesystem::path path = config->gasPath + name + ".json";
@@ -120,7 +120,7 @@ Json Storage::getGas(const std::string& name) {
     return res;
 }
 
-bool Storage::saveGas(const std::string &name, const Json& prog) {
+bool Storage_old::saveGas(const std::string &name, const Json& prog) {
     std::filesystem::path path = config->gasPath + name + ".json";
     if(std::filesystem::is_regular_file(path)){
         return false;

@@ -8,7 +8,7 @@
 #include "Link.h"
 
 #include "FastConfig.h"
-#include "Storage.h"
+#include "Storage_old.h"
 
 union Buffer{
     unsigned short int val[2];
@@ -19,7 +19,7 @@ class Crate : public Stoppable{
 private:
     Buffer buffer;
     FastConfig config;
-    Storage storage;
+    Storage_old storage;
     Link* links[MAX_LINKS];
 
     bool payload() override;
