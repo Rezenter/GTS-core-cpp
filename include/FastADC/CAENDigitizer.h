@@ -17,6 +17,15 @@
 #ifndef __CAENDIGITIZER_H
 #define __CAENDIGITIZER_H
 
+#define _CAEN_DGTZ_STR_HELPER(S)		#S
+#define CAEN_DGTZ_STR(S)				_CAEN_DGTZ_STR_HELPER(S)
+
+#define CAEN_DGTZ_VERSION_MAJOR		2																																//!< Major version
+#define CAEN_DGTZ_VERSION_MINOR		17																																//!< Minor version
+#define CAEN_DGTZ_VERSION_PATCH		3																																//!< Patch version
+#define CAEN_DGTZ_VERSION			CAEN_DGTZ_STR(CAEN_DGTZ_VERSION_MAJOR) "." CAEN_DGTZ_STR(CAEN_DGTZ_VERSION_MINOR) "." CAEN_DGTZ_STR(CAEN_DGTZ_VERSION_PATCH)	//!< The version string as Major.Minor.Patch
+#define CAEN_DGTZ_VERSION_NUMBER	((CAEN_DGTZ_VERSION_MAJOR) * 10000 + (CAEN_DGTZ_VERSION_MINOR) * 100 + (CAEN_DGTZ_VERSION_PATCH))								//!< The version number: for example version 1.2.3 gives 10203
+
 #include "CAENDigitizerType.h"
 
 #ifdef __cplusplus
@@ -47,6 +56,14 @@ extern "C" {
 #define MAX_PROBENAMES_LEN (50)
 
 /**************************************************************************//**
+* \brief   Returns the Software Release of the library
+*
+* \param   [OUT] SwRel: the Software Release of the library.
+* \return  0 = Success; negative numbers are error codes
+******************************************************************************/
+CAENDGTZ_DLLAPI CAEN_DGTZ_ErrorCode CAENDGTZ_API CAEN_DGTZ_SWRelease(char* SwRel);
+
+/**************************************************************************//**
 * \fn      CAENDGTZ_DLLAPI CAEN_DGTZ_ErrorCode CAENDGTZ_API CAEN_DGTZ_OpenDigitizer(CAEN_DGTZ_ConnectionType LinkType, int LinkNum, int ConetNode, uint32_t VMEBaseAddress, int *handle);
 * \brief   Opens the Digitizer
 *
@@ -57,7 +74,7 @@ extern "C" {
 * \param   [IN]  ConetNode     :
 *                         - for CONET identify  which device in the daisy-chain is addressed
 *                         - for USB must be 0.
-* \param   [IN]     VMEBaseAddress: The VME base link of the board in case you want to access a board through VME bus, 0 otherwise.
+* \param   [IN]     VMEBaseAddress: The VME base address of the board in case you want to access a board through VME bus, 0 otherwise.                         
 * \param   [OUT] handle        : device handler
 * \return  0 = Success; negative numbers are error codes
 ******************************************************************************/
@@ -77,10 +94,10 @@ CAENDGTZ_DLLAPI CAEN_DGTZ_ErrorCode CAENDGTZ_API CAEN_DGTZ_CloseDigitizer(int ha
 
 /**************************************************************************//**
 * \fn          CAENDGTZ_DLLAPI CAEN_DGTZ_ErrorCode CAENDGTZ_API CAEN_DGTZ_WriteRegister(int handle, uint32_t Address, uint32_t Data);
-* \brief     Writes a 32-bit word in a specific link offset of the digitizer
+* \brief     Writes a 32-bit word in a specific address offset of the digitizer
 *
 * \param     [IN] handle  : the digitizer handle
-* \param    [IN] Address : the register link offset
+* \param    [IN] Address : the register address offset
 * \param    [IN] Data    : the 32-bit data to write
 * \return  0 = Success; negative numbers are error codes
 ******************************************************************************/
@@ -89,10 +106,10 @@ CAENDGTZ_DLLAPI CAEN_DGTZ_ErrorCode CAENDGTZ_API CAEN_DGTZ_WriteRegister(int han
 
 /**************************************************************************//**
 * \fn          CAENDGTZ_DLLAPI CAEN_DGTZ_ErrorCode CAENDGTZ_API CAEN_DGTZ_ReadRegister(int handle, uint32_t Address, uint32_t *Data);
-* \brief     Reads a 32-bit word from a specific link offset of the digitizer
+* \brief     Reads a 32-bit word from a specific address offset of the digitizer
 *
 * \param     [IN] handle  : the digitizer handle
-* \param    [IN] Address : the register link offset
+* \param    [IN] Address : the register address offset
 * \param    [IN] Data    : the 32-bit data read from the digitizer
 * \return  0 = Success; negative numbers are error codes
 ******************************************************************************/
@@ -816,7 +833,7 @@ CAENDGTZ_DLLAPI CAEN_DGTZ_ErrorCode CAENDGTZ_API CAEN_DGTZ_GetMaxNumEventsBLT(in
 * \note     Grandfathered into the <b>new readout API</b>
 *
 * \param     [IN]  handle : digitizer handle
-* \param     [OUT] buffer : the link of the buffer pointer (WARNING: the *buffer MUST be initialized to NULL)
+* \param     [OUT] buffer : the address of the buffer pointer (WARNING: the *buffer MUST be initialized to NULL)
 * \param     [OUT] size   : the size in byte of the buffer allocated
 * \return  0 = Success; negative numbers are error codes
 ******************************************************************************/
@@ -828,7 +845,7 @@ CAENDGTZ_DLLAPI CAEN_DGTZ_ErrorCode CAENDGTZ_API CAEN_DGTZ_MallocReadoutBuffer(i
 * \note        Grandfathered into the <b>new readout API</b>
 *
 * \param     [IN]  handle     : digitizer handle
-* \param     [OUT] buffer     : link of the buffer that will store data (acquisition buffer)
+* \param     [OUT] buffer     : address of the buffer that will store data (acquisition buffer)
 * \param     [OUT] bufferSize : the size of the data stored in the buffer
 * \return  0 = Success; negative numbers are error codes
 ******************************************************************************/
@@ -840,7 +857,7 @@ CAENDGTZ_DLLAPI CAEN_DGTZ_ErrorCode CAENDGTZ_API CAEN_DGTZ_ReadData(int handle, 
 * \note     Grandfathered into the <b>new readout API</b>
 *
 * \param     [IN] handle : digitizer handle
-* \param     [IN] buffer : link to the acquisition buffer returned by CAEN_DGTZ_MallocReadoutBuffer
+* \param     [IN] buffer : address to the acquisition buffer returned by CAEN_DGTZ_MallocReadoutBuffer
 * \return  0 = Success; negative numbers are error codes
 ******************************************************************************/
 CAENDGTZ_DLLAPI CAEN_DGTZ_ErrorCode CAENDGTZ_API CAEN_DGTZ_FreeReadoutBuffer(char **buffer);
@@ -902,7 +919,7 @@ CAENDGTZ_DLLAPI CAEN_DGTZ_ErrorCode CAENDGTZ_API CAEN_DGTZ_FreeEvent(int handle,
 * \note     Part of the <b>new readout API</b>
 *
 * \param    [IN]  handle     : digitizer handle
-* \param     [IN]  buffer     : link of the acquisition buffer
+* \param     [IN]  buffer     : address of the acquisition buffer
 * \param     [IN]  buffsize   : acquisition buffer size (in samples)
 * \param     [OUT] events     : pointer to the event list (allocated via MallocDPPEvents)
 * \param    [OUT] numEventsArray  : pointer to an array of int which will contain the number of events found per channel
