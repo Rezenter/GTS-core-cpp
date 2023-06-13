@@ -23,11 +23,13 @@ public:
     std::string plasmaShotnPath = "z:/SHOTN.txt";
     std::string debugShotnPath = "d:/data/db/debug/SHOTN.txt";
     std::string gasPath = "d:/data/db/gas/";
-    std::string configsPath = "d:/data/db/config/";
+    std::string configsPath = "d:/data/db/config_cpp/";
     std::string spectralPath = "d:/data/db/calibration/expected/";
     std::string absPath = "d:/data/db/calibration/abs/processed/";
 
     //FastConfig fastConfig;
+    int version = 0;
+    bool config_ready = false;
 };
 
 

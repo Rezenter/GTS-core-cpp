@@ -7,6 +7,8 @@
 
 #include "json.hpp"
 
+#define extension_json ".json"
+
 using Json = nlohmann::json;
 
 class Diag;
@@ -19,7 +21,8 @@ public:
     Storage(Diag& parent): parent(parent){} ;
     //explicit Storage();
 
-    Json getConfigsNames();
+    Json getConfigsNames() const;
+    Json loadConfig(const std::string& filename);
 };
 
 

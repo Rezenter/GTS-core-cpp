@@ -11,8 +11,8 @@
 </style>
 <body>
     <div class="row">
-        <p>Select config</p>
-
+        <label for="config_select">Diagnostics configuration:</label><select id="config_select"></select>
+        <button class="btn btn-success" id="config_load_button">Load</button>
     </div>
     <hr>
     <div class="row">
@@ -28,13 +28,32 @@
 
 <script>
     function Main () {
+        this.selectors = {
+            'config': $('#config_select')
+        };
+
         this.Request = function (req, callback) {
             $.post('/api', JSON.stringify(req), callback, 'json');
         };
 
-
         this.ConnectControls = function () {
-            //$('#ADC_reboot_button').on('click', this, this.ADCReboot);
+            $('#config_load_button').on('click', this, function () {
+                this.Request(
+                    {
+                        subsystem: 'diag',
+                        reqtype: 'load_config',
+                        config: this.selectors.config.val()
+                    }
+                    , function (resp) {
+                        if(!resp.ok){
+                            console.log(resp);
+                            alert(resp.err);
+                        }else{
+
+                        }
+                    }.bind(this)
+                )
+            }.bind(this));
         };
 
         this.GetConfigs = function(){
@@ -48,19 +67,14 @@
                         console.log(resp);
                         alert(resp.err);
                     }else{
-                        this.UpdateConfigSelects();
+                        let options =  [];
+                        resp.configs.forEach(entry => options.push("<option>" + entry + "</option>"));
+                        this.selectors.config.html(options.reverse());
                     }
                 }.bind(this)
             );
         }.bind(this);
 
-        this.UpdateConfigSelects = function() {
-            let options = [];
-
-            options = [];
-            this.aqc_configs.configs.forEach(entry => options.push("<option>" + entry + "</option>"));
-            $('.configs').html(options.reverse());
-        };
 
         this.ConnectControls();
         this.GetConfigs();

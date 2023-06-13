@@ -37,7 +37,7 @@ public:
     unsigned int recordLength = 1024;
     unsigned int triggerDelay = 18; // *16 cells
     float offset = 1100.0; // mv
-    uint16_t offsetADC = 0x7FFF;
+    uint16_t offsetADC = 0x7FFF;  // CALCULATE!!!!
 
     //storage
     std::string plasmaPath = "d:/data/fastDump/plasma/";

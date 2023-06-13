@@ -24,22 +24,29 @@ Diag::~Diag() {
 
 Json Diag::APIRequestHandler(Json req){
     Json resp;
-    if(req.at("subsystem") == "diag") {
-        if(req.at("reqtype") == "get_configs"){
-            resp["data"] = storage.getConfigsNames();
-            resp["ok"] = true;
-        }else {
+    try {
+        if (req.at("subsystem") == "diag") {
+            if (req.at("reqtype") == "get_configs") {
+                resp = storage.getConfigsNames();
+                resp["ok"] = true;
+            } else if (req.at("reqtype") == "load_config") {
+                resp = storage.loadConfig(req.at("config"));
+            } else {
+                resp = {{"ok",  false},
+                        {"err", "unknown reqtype"}};
+            }
+            //resp = crate.requestHandler(req);
+        } else if (req.at("subsystem") == "ADC") {
+            //resp = crate.requestHandler(req);
+        } else if (req.at("subsystem") == "slowADC") {
+            //resp = slowSubsystem.requestHandler(req);
+        } else {
             resp = {{"ok",  false},
-                    {"err", "unknown reqtype"}};
+                    {"err", "unknown subsystem"}};
         }
-        //resp = crate.requestHandler(req);
-    }else if(req.at("subsystem") == "ADC"){
-        //resp = crate.requestHandler(req);
-    }else if(req.at("subsystem") == "slowADC"){
-        //resp = slowSubsystem.requestHandler(req);
-    }else{
-        resp = {{"ok", false},
-                {"err", "unknown subsystem"}};
+    }catch (const std::exception& e) {
+        resp = {{"ok",  false},
+                {"err", e.what()}};
     }
     return resp;
 }
